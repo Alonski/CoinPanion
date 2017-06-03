@@ -8,6 +8,12 @@ import './css/open-sans.css'
 import './css/pure-min.css'
 import './App.css'
 
+import AppBar from 'material-ui/AppBar';
+import IconMenu from 'material-ui/IconMenu';
+import MenuItem from 'material-ui/MenuItem';
+import IconButton from 'material-ui/IconButton';
+import NavigationMenu from 'material-ui/svg-icons/navigation/menu';
+
 class App extends Component {
   constructor(props) {
     super(props)
@@ -30,7 +36,7 @@ class App extends Component {
 
     // Get the RPC provider and setup our SimpleStorage contract.
     var {host, port} = Config.networks[process.env.NODE_ENV]
-    
+
     const provider = new Web3.providers.HttpProvider('http://' + host + ':' + port)
     const contract = require('truffle-contract')
     const simpleStorage = contract(SimpleStorageContract)
@@ -62,16 +68,29 @@ class App extends Component {
   }
 
   render() {
+    const Menu = () => (
+      <IconMenu
+        iconButtonElement={
+          <IconButton><NavigationMenu /></IconButton>
+        }
+        targetOrigin={{horizontal: 'left', vertical: 'top'}}
+        anchorOrigin={{horizontal: 'left', vertical: 'top'}}
+      >
+        <MenuItem primaryText="Dashboard" />
+        <MenuItem primaryText="Explore" />
+        <MenuItem primaryText="Edit Profile" />
+        <MenuItem primaryText="About" />
+      </IconMenu>
+    );
+    Menu.muiName = 'IconMenu';
+
     return (
       <div className="App">
-        <nav className="navbar pure-menu pure-menu-horizontal">
-            <a href="#" className="pure-menu-heading pure-menu-link">Truffle Box</a>
-            {/*}<ul className="pure-menu-list">
-                <li className="pure-menu-item"><a href="#" className="pure-menu-link">News</a></li>
-                <li className="pure-menu-item"><a href="#" className="pure-menu-link">Sports</a></li>
-                <li className="pure-menu-item"><a href="#" className="pure-menu-link">Finance</a></li>
-            </ul>*/}
-        </nav>
+        <AppBar
+          title="CoinPanion"
+          iconClassNameRight="muidocs-icon-navigation-expand-more"
+          iconElementLeft={<Menu />}
+        />
 
         <main className="container">
           <div className="pure-g">
