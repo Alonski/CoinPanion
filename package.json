@@ -1,6 +1,6 @@
 {
-  "name": "truffle-box-status",
-  "version": "0.1.1",
+  "name": "coinpanion",
+  "version": "1.0.0",
   "private": true,
   "devDependencies": {
     "autoprefixer": "6.5.1",
