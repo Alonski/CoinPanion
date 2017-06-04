@@ -12,6 +12,9 @@ class Profile extends Component {
     return (
       <Main>
         <h1>Profile</h1>
+        <ul>
+          {this.props.addresses.map(address => <li key={address}>{address}</li>)}
+        </ul>
       </Main>
     )
   }

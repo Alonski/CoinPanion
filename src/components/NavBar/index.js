@@ -18,7 +18,7 @@ const Menu = (props, context) => (
   >
     <MenuItem data="/explore" primaryText="Explore" />
     <MenuItem data="/dashboard" primaryText="Dashboard" />
-    <MenuItem data="/profile" primaryText="Edit Profile" />
+    <MenuItem data="/profile" primaryText="Profile" />
     <MenuItem data="/about" primaryText="About" />
   </IconMenu>
 )
@@ -29,24 +29,13 @@ Menu.contextTypes = {
 }
 
 class NavBar extends Component {
-  onClick = () => {
-    console.log(this.menu)
-  }
-
   render() {
     let counter = 0
     return (
       <AppBar
         title="CoinPanion"
         iconClassNameRight="muidocs-icon-navigation-expand-more"
-        iconElementLeft={
-          <Menu
-            onClick={this.onClick}
-            ref={menu => {
-              this.menu = menu
-            }}
-          />
-        }
+        iconElementLeft={<Menu />}
         onTitleTouchTap={() => {
           firebase.database().ref('hello/').set({
             count: counter

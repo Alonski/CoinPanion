@@ -1,20 +1,24 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
+import React from 'react'
+import ReactDOM from 'react-dom'
 import { AppContainer } from 'react-hot-loader'
-import App from './App';
-import injectTapEventPlugin from 'react-tap-event-plugin';
-import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+import App from 'containers/App'
+import injectTapEventPlugin from 'react-tap-event-plugin'
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider'
+import { Provider } from 'react-redux'
+import configureStore from './store/configureStore'
 
-// Needed for onTouchTap
-// http://stackoverflow.com/a/34015469/988941
-injectTapEventPlugin();
+const store = configureStore()
+
+injectTapEventPlugin()
 
 const render = Component => {
   ReactDOM.render(
     <AppContainer>
-      <MuiThemeProvider>
-        <Component />
-      </MuiThemeProvider>
+      <Provider store={store}>
+        <MuiThemeProvider>
+          <Component />
+        </MuiThemeProvider>
+      </Provider>
     </AppContainer>,
     document.getElementById('root')
   )
@@ -23,6 +27,7 @@ const render = Component => {
 render(App)
 
 if (module.hot) {
-  module.hot.accept('./containers/Root', () => { render(App) })
+  module.hot.accept('./containers/Root', () => {
+    render(App)
+  })
 }
-
