@@ -1,23 +1,22 @@
 import React, { Component } from 'react'
-import NavBar from 'components/NavBar'
+import styled from 'styled-components'
 import { GridList, GridTile } from 'material-ui/GridList'
 import DropDownMenu from 'material-ui/DropDownMenu'
 import MenuItem from 'material-ui/MenuItem'
 
-const styles = {
-  root: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around'
-  },
-  container: {
-    // need to figure out how to make this scale for mobile
-    width: 500
-  },
-  gridList: {
-    width: '100%'
-  }
-}
+const Main = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+`
+
+const Container = styled.div`
+  width: 500px;
+`
+
+const StyledGridList = styled(GridList)`
+  width: 100%;
+`
 
 const mockUsers = [
   {
@@ -93,19 +92,18 @@ class DropDown extends Component {
 class Explore extends Component {
   render() {
     return (
-      <div style={styles.root}>
-        <NavBar />
-        <div style={styles.container}>
+      <Main>
+        <Container>
           <DropDown />
-          <GridList style={styles.gridList}>
+          <StyledGridList>
             {mockUsers.map((user, index) => (
               <GridTile key={index} title={user.name} subtitle={user.tag}>
                 <img src="avatar.jpeg" alt="user" />
               </GridTile>
             ))}
-          </GridList>
-        </div>
-      </div>
+          </StyledGridList>
+        </Container>
+      </Main>
     )
   }
 }

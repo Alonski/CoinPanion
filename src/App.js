@@ -1,31 +1,28 @@
 import React, { Component } from 'react'
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
+import Web3 from 'web3'
+import * as firebase from 'firebase'
+
+import NavBar from 'components/NavBar'
+import About from 'components/About'
+import Explore from 'components/Explore'
+import Profile from 'components/Profile'
+import Dashboard from 'components/Dashboard'
+import NoMatch from 'components/NoMatch'
+
 import SimpleStorageContract from '../build/contracts/SimpleStorage.json'
 import Config from '../truffle.js'
-import Web3 from 'web3'
+import { config } from '../devConfig'
 
 import './css/oswald.css'
 import './css/open-sans.css'
 import './css/pure-min.css'
 import './App.css'
 
-import Explore from './scenes/Explore'
-
-import * as firebase from 'firebase'
-
-const config = {
-  apiKey: 'AIzaSyBvtALc2KP_uV8xshxM-Lh2bhww6ywjPOU',
-  authDomain: 'coinpanion.firebaseapp.com',
-  databaseURL: 'https://coinpanion.firebaseio.com',
-  projectId: 'coinpanion',
-  storageBucket: 'coinpanion.appspot.com',
-  messagingSenderId: '864785142515'
-}
-firebase.initializeApp(config)
-
 class App extends Component {
   constructor(props) {
     super(props)
-
+    firebase.initializeApp(config)
     this.state = {
       storageValue: 0
     }
@@ -43,7 +40,7 @@ class App extends Component {
     var self = this
 
     // Get the RPC provider and setup our SimpleStorage contract.
-    var { host, port } = Config.networks[process.env.NODE_ENV]
+    const { host, port } = Config.networks[process.env.NODE_ENV]
 
     const provider = new Web3.providers.HttpProvider('http://' + host + ':' + port)
     const contract = require('truffle-contract')
@@ -81,30 +78,19 @@ class App extends Component {
 
   render() {
     return (
-      <div className="App">
-        <Explore />
-
-        {/*<main className="container">
-          <div className="pure-g">
-            <div className="pure-u-1-1">
-              <h1>Good to Go!</h1>
-              <p>Your Truffle Box is installed and ready.</p>
-              <h2>Smart Contract Example</h2>
-              <p>
-                The below will show a stored value of 5 by default if your contracts compiled and migrated successfully.
-              </p>
-              <p>
-                Try changing the value stored on
-                {' '}
-                <strong>line 50</strong>
-                {' '}
-                of App.js.
-              </p>
-              <p>The stored value is: {this.state.storageValue}</p>
-            </div>
-          </div>
-        </main>*/}
-      </div>
+      <Router>
+        <div className="App">
+          <NavBar />
+          <Switch>
+            <Route exact path="/" component={Explore} />
+            <Route path="/explore" component={Explore} />
+            <Route path="/about" component={About} />
+            <Route path="/profile" component={Profile} />
+            <Route path="/dashboard" component={Dashboard} />
+            <Route component={NoMatch} />
+          </Switch>
+        </div>
+      </Router>
     )
   }
 }
