@@ -8,11 +8,7 @@ import './css/open-sans.css'
 import './css/pure-min.css'
 import './App.css'
 
-import AppBar from 'material-ui/AppBar'
-import IconMenu from 'material-ui/IconMenu'
-import MenuItem from 'material-ui/MenuItem'
-import IconButton from 'material-ui/IconButton'
-import NavigationMenu from 'material-ui/svg-icons/navigation/menu'
+import Explore from './scenes/Explore'
 
 import * as firebase from 'firebase'
 
@@ -84,37 +80,11 @@ class App extends Component {
   }
 
   render() {
-    const Menu = () => (
-      <IconMenu
-        iconButtonElement={<IconButton><NavigationMenu /></IconButton>}
-        targetOrigin={{ horizontal: 'left', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'left', vertical: 'top' }}
-      >
-        <MenuItem primaryText="Dashboard" />
-        <MenuItem primaryText="Explore" />
-        <MenuItem primaryText="Edit Profile" />
-        <MenuItem primaryText="About" />
-      </IconMenu>
-    )
-    Menu.muiName = 'IconMenu'
-
-    let counter = 0
-
     return (
       <div className="App">
-        <AppBar
-          title="CoinPanion"
-          iconClassNameRight="muidocs-icon-navigation-expand-more"
-          iconElementLeft={<Menu />}
-          onTitleTouchTap={() => {
-            firebase.database().ref('hello/').set({
-              count: counter
-            })
-            counter++
-          }}
-        />
+        <Explore />
 
-        <main className="container">
+        {/*<main className="container">
           <div className="pure-g">
             <div className="pure-u-1-1">
               <h1>Good to Go!</h1>
@@ -133,7 +103,7 @@ class App extends Component {
               <p>The stored value is: {this.state.storageValue}</p>
             </div>
           </div>
-        </main>
+        </main>*/}
       </div>
     )
   }
