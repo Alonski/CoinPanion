@@ -84,7 +84,8 @@
   "scripts": {
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
-    "test": "node scripts/test.js --env=jsdom"
+    "test": "node scripts/test.js --env=jsdom",
+    "network": "testrpc -p 8546 -m \"noble chat staff table nominee brick monkey weapon poet pink beyond brown\""
   },
   "jest": {
     "collectCoverageFrom": [
