@@ -83,12 +83,15 @@ class Dasboard extends Component {
       vault
         .deployed()
         .then(function(instance) {
+          console.log(instance)
           vaultInstance = instance
           return vaultInstance.receiveEther({ from: accounts[0], value: 5000 })
         })
         .then(function(result) {
           _waitForTxToBeMined(web3RPC, result.tx)
-          console.log(result.tx)
+          console.log('Mined TX:', result.tx)
+          console.log('Contract Balance:', web3RPC.eth.getBalance(vaultInstance.address).toString())
+          console.log('Address Balance:', web3RPC.eth.getBalance(accounts[0]).toString())
         })
     })
   }
