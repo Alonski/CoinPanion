@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
-import * as firebase from 'firebase'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
 
@@ -11,8 +10,6 @@ import Profile from 'containers/ProfileWrapper'
 import Dashboard from 'components/Dashboard'
 import NoMatch from 'components/NoMatch'
 
-import { config } from '../../devConfig'
-
 import * as profileActions from '../actions/profile'
 
 import '../css/oswald.css'
@@ -21,11 +18,6 @@ import '../css/pure-min.css'
 import './App.css'
 
 class App extends Component {
-  constructor(props) {
-    super(props)
-    firebase.initializeApp(config)
-  }
-
   componentDidMount() {
     this.props.getAddresses()
   }

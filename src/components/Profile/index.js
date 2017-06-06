@@ -1,5 +1,7 @@
 import React, { Component } from 'react'
 import styled from 'styled-components'
+import 'react-grid-layout/css/styles.css'
+import 'react-resizable/css/styles.css'
 
 const Main = styled.div`
   display: flex;
@@ -18,6 +20,10 @@ class Profile extends Component {
       </Main>
     )
   }
+}
+
+Profile.defaultProps = {
+  addresses: []
 }
 
 export default Profile
