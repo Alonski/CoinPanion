@@ -163,7 +163,6 @@ class EditProfile extends Component {
 
   componentWillReceiveProps() {
     const myAddress = this.props.addresses[0]
-    console.log(this.props.users ? this.props.users[myAddress] : this.props.users)
     if (this.props.users && this.props.users[myAddress]) {
       const myProfile = this.props.users[myAddress]
       this.setState({
