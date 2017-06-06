@@ -72,11 +72,6 @@ class Uploader extends Component {
   }
 }
 
-const fbWrappedUploader = firebase([filesPath])(Uploader)
-const FbUploader = connect(({ firebase }) => ({
-  uploadedFiles: dataToJS(firebase, filesPath)
-}))(fbWrappedUploader)
-
 class CategoryDropDown extends Component {
   render() {
     return (
