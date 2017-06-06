@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
 import styled from 'styled-components'
 
+import Avatar from 'material-ui/Avatar'
+
 import SimpleStorageContract from '../../../build/contracts/SimpleStorage.json'
 import VaultContract from '../../../build/contracts/Vault.json'
 import Conf from '../../../truffle.js'
@@ -102,6 +104,7 @@ class Dasboard extends Component {
         <Main>
           <h1>Dashboard</h1>
         </Main>
+        <Avatar src="http://lorempixel.com/400/200/" />
         <div>The stored value is: {this.state.storageValue}</div>
       </div>
     )
