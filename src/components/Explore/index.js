@@ -49,12 +49,13 @@ class Explore extends Component {
       height: -1
     },
     offset: 0,
-    users: []
+    users: [],
+    isLoading: false
   }
 
   constructor(props) {
     super(props)
-    this.handleScroll = throttle(300, this.handleScroll)
+    this.handleLoadMore = throttle(300, this.handleLoadMore)
   }
 
   componentDidMount() {
@@ -73,15 +74,20 @@ class Explore extends Component {
     const coefficient = 0.7
     const el = e.target.body
     if (!el) return
-    if (el.scrollTop > el.scrollHeight * coefficient) {
-      const { offset, users } = this.state
-      const newOffset = offset + 50
-      this.setState({ offset: newOffset })
-      const usersRef = this.props.firebase.database().ref('users')
-      usersRef.orderByChild('id').endAt(newOffset).once('value', snapshot => {
-        this.setState({ users: Object.assign(users, snapshot.val()) })
-      })
+    if (el.scrollTop > el.scrollHeight * coefficient && !this.state.isLoading) {
+      this.setState({ isLoading: true })
+      this.handleLoadMore()
     }
+  }
+
+  handleLoadMore = () => {
+    const { offset, users } = this.state
+    const newOffset = offset + 50
+    this.setState({ offset: newOffset })
+    const usersRef = this.props.firebase.database().ref('users')
+    usersRef.orderByChild('id').endAt(newOffset).once('value', snapshot => {
+      this.setState({ users: Object.assign(users, snapshot.val()), isLoading: false })
+    })
   }
 
   getColumnsNum = () => {
@@ -94,13 +100,11 @@ class Explore extends Component {
 
   render() {
     const { users } = this.state
-
     return (
       <Main>
         <Container>
           <DropDown />
           <Measure
-            onScroll={() => console.log('scrolling')}
             margin
             bounds
             onResize={contentRect => {

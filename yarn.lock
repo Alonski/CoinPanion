@@ -3077,7 +3077,7 @@ findup@^0.1.5:
     colors "~0.6.0-1"
     commander "~2.1.0"
 
-firebase@^3.9.0:
+firebase@^3.6.1, firebase@^3.9.0:
   version "3.9.0"
   resolved "https://registry.yarnpkg.com/firebase/-/firebase-3.9.0.tgz#c4237f50f58eeb25081b1839d6cbf175f8f7ed9b"
   dependencies:
@@ -4720,6 +4720,12 @@ marked@^0.3.6:
   version "0.3.6"
   resolved "https://registry.yarnpkg.com/marked/-/marked-0.3.6.tgz#b2c6c618fccece4ef86c4fc6cb8a7cbf5aeda8d7"
 
+material-ui-search-bar@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/material-ui-search-bar/-/material-ui-search-bar-0.2.1.tgz#df8c501ea0bd2e92b68ded2be49485735ca030ef"
+  dependencies:
+    prop-types "^15.5.8"
+
 material-ui@^0.18.1:
   version "0.18.1"
   resolved "https://registry.yarnpkg.com/material-ui/-/material-ui-0.18.1.tgz#1c8a47d7e930ff0b07064dd8633035984a5a3569"
@@ -5894,6 +5900,12 @@ query-string@^4.1.0:
   dependencies:
     object-assign "^4.1.0"
     strict-uri-encode "^1.0.0"
+
+querybase@^0.6.0:
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/querybase/-/querybase-0.6.0.tgz#b65e161fcf7d55dd38f43e960d06c485f9de7e54"
+  dependencies:
+    firebase "^3.6.1"
 
 querystring-es3@^0.2.0, querystring-es3@~0.2.0:
   version "0.2.1"

@@ -1,7 +1,9 @@
 import React, { Component } from 'react'
-import * as firebase from 'firebase'
 import PropTypes from 'prop-types'
+import { connect } from 'react-redux'
+import { bindActionCreators } from 'redux'
 
+import SearchBar from '../Search'
 import AppBar from 'material-ui/AppBar'
 import IconMenu from 'material-ui/IconMenu'
 import MenuItem from 'material-ui/MenuItem'
@@ -9,7 +11,10 @@ import IconButton from 'material-ui/IconButton'
 import NavigationMenu from 'material-ui/svg-icons/navigation/menu'
 import { white } from 'material-ui/styles/colors'
 
-const Menu = (props, context) => (
+import { searchResultsForPopup } from '../../utils/selectors'
+import * as searchActions from '../../actions/search'
+
+const Menu = (props, context) =>
   <IconMenu
     iconButtonElement={<IconButton><NavigationMenu color={white} /></IconButton>}
     targetOrigin={{ horizontal: 'left', vertical: 'top' }}
@@ -21,7 +26,6 @@ const Menu = (props, context) => (
     <MenuItem data="/profile" primaryText="Profile" />
     <MenuItem data="/about" primaryText="About" />
   </IconMenu>
-)
 
 Menu.muiName = 'IconMenu'
 Menu.contextTypes = {
@@ -29,22 +33,32 @@ Menu.contextTypes = {
 }
 
 class NavBar extends Component {
+  handleSearch = query => {
+    this.props.search(query)
+  }
+
   render() {
-    let counter = 0
     return (
-      <AppBar
-        title="CoinPanion"
-        iconClassNameRight="muidocs-icon-navigation-expand-more"
-        iconElementLeft={<Menu />}
-        onTitleTouchTap={() => {
-          firebase.database().ref('hello/').set({
-            count: counter
-          })
-          counter++
-        }}
-      />
+      <AppBar title="CoinPanion" iconClassNameRight="muidocs-icon-navigation-expand-more" iconElementLeft={<Menu />}>
+        <SearchBar
+          onChange={this.handleSearch}
+          onRequestSearch={this.handleSearch}
+          style={{ alignSelf: 'center', borderRadius: 50 }}
+          dataSource={this.props.data}
+          hintText="Type anything"
+          maxSearchResults={10}
+        />
+      </AppBar>
     )
   }
 }
 
-export default NavBar
+function mapStateToProps(state) {
+  return { data: searchResultsForPopup(state) }
+}
+
+function mapDispatchToProps(dispatch) {
+  return bindActionCreators({ ...searchActions }, dispatch)
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(NavBar)
