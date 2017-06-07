@@ -6,6 +6,7 @@ const { dataToJS } = helpers
 import { Card, CardActions, CardHeader, CardTitle, CardText } from 'material-ui/Card'
 import Dialog from 'material-ui/Dialog'
 import FlatButton from 'material-ui/FlatButton'
+import TextField from 'material-ui/TextField'
 
 const Main = styled.div`
   display: flex;
@@ -15,7 +16,8 @@ const Main = styled.div`
 
 class UserProfile extends Component {
   state = {
-    open: false
+    open: false,
+    coinAmount: 0.0
   }
 
   handleOpen = () => {
@@ -26,8 +28,29 @@ class UserProfile extends Component {
     this.setState({ open: false })
   }
 
+  handleCoinAmountChange = (e, newValue) => {
+    this.setState({ coinAmount: newValue })
+  }
+
+  validateCoining() {
+    if (isNaN(parseFloat(this.state.coinAmount))) {
+      return false
+    } else {
+      return true
+    }
+  }
+
+  handleCoining = () => {
+    // PLACEHOLDER FOR LINKING TO CONTRACT FUNCTION
+    this.setState({ open: false })
+  }
+
   render() {
     const { userProfile } = this.props
+    const actions = [
+      <FlatButton label="Cancel" onTouchTap={this.handleClose} />,
+      <FlatButton label="Coin!" primary={true} keyboardFocused={true} onTouchTap={this.handleCoining} />
+    ]
     return (
       <Card>
         <CardHeader
@@ -44,8 +67,24 @@ class UserProfile extends Component {
         </CardText>
         <CardTitle title="Coined by 0 for 0.0 Eth/Month" />
         <CardActions>
-          <FlatButton label={`Coin ${userProfile.first_name}`} primary={true} />
+          <FlatButton label={`Coin ${userProfile.first_name}`} primary={true} onTouchTap={this.handleOpen} />
         </CardActions>
+        <Dialog
+          title={`Coin ${userProfile.first_name}`}
+          actions={actions}
+          modal={false}
+          open={this.state.open}
+          onRequestClose={this.handleClose}
+        >
+          Show your support and subscribe to {userProfile.first_name}!
+          <br />
+          <TextField
+            defaultValue={this.state.coinAmount}
+            floatingLabelText="Eth per Month"
+            errorText={this.validateCoining() ? null : 'Value must be a number'}
+            onChange={this.handleCoinAmountChange}
+          />
+        </Dialog>
       </Card>
     )
   }
