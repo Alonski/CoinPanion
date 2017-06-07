@@ -1,17 +1,16 @@
 import React, { Component } from 'react'
 import styled from 'styled-components'
 import TextField from 'material-ui/TextField'
-import MenuItem from 'material-ui/MenuItem'
 import Avatar from 'material-ui/Avatar'
 import RaisedButton from 'material-ui/RaisedButton'
-import FlatButton from 'material-ui/FlatButton'
-import SelectField from 'material-ui/SelectField'
 import Snackbar from 'material-ui/Snackbar'
 import { connect } from 'react-redux'
 import { firebase, helpers } from 'react-redux-firebase'
 import Paper from 'material-ui/Paper'
+import Uploader from './Uploader'
+import CategoryDropdown from './CategoryDropdown'
+
 const { dataToJS } = helpers
-import Dropzone from 'react-dropzone'
 
 // Path within Database for metadata (also used for file Storage path)
 const filesPath = 'uploadedFiles'
@@ -30,65 +29,13 @@ const FormContainer = styled.div`
   padding: 10px 10px 10px 10px;
 `
 
-const categories = [
-  'None',
-  'Developer',
-  'Video & Film',
-  'Podcasts',
-  'Comics',
-  'Comedy',
-  'Crafts & DIY',
-  'Music',
-  'Drawing & Painting',
-  'Games',
-  'Science',
-  'Dance & Theater',
-  'Writing',
-  'Animation',
-  'Photography',
-  'Education',
-  'Other'
-]
+const StyledPaper = styled(Paper)`
+  margin: 25px 0;
+`
 
-class Uploader extends Component {
-  render() {
-    let dropzoneRef
-    return (
-      <div>
-        <Dropzone
-          ref={node => {
-            dropzoneRef = node
-          }}
-          onDrop={this.props.onDrop}
-          style={{ display: 'hidden' }}
-        />
-        <FlatButton
-          label="Change Profile Picture"
-          onTouchTap={() => {
-            dropzoneRef.open()
-          }}
-        />
-      </div>
-    )
-  }
-}
-
-class CategoryDropDown extends Component {
-  render() {
-    return (
-      <div>
-        <SelectField
-          floatingLabelText="Category"
-          value={this.props.value}
-          onChange={this.props.onChange}
-          maxHeight={200}
-        >
-          {categories.map((category, index) => <MenuItem key={index} value={category} primaryText={category} />)}
-        </SelectField>
-      </div>
-    )
-  }
-}
+const StyledRaisedButton = styled(RaisedButton)`
+  margin: 10px;
+`
 
 class EditProfile extends Component {
   constructor(props) {
@@ -104,7 +51,8 @@ class EditProfile extends Component {
       photo_url: '',
       id: '',
       openSnackbar: false,
-      snackbarMessage: ''
+      snackbarMessage: '',
+      pristine: true
     }
   }
 
@@ -138,7 +86,7 @@ class EditProfile extends Component {
             console.error(error)
             this.setState({ openSnackbar: true, snackbarMessage: 'Error: Profile not created' })
           } else {
-            this.setState({ openSnackbar: true, snackbarMessage: 'Profile created' })
+            this.setState({ openSnackbar: true, snackbarMessage: 'Profile updated' })
           }
         })
       } else {
@@ -169,6 +117,7 @@ class EditProfile extends Component {
   handleFieldChange = (stateKey, event, newValue) => {
     const obj = {}
     obj[stateKey] = newValue // so key can be programatically assigned
+    obj.pristine = false
     this.setState(obj)
   }
 
@@ -218,52 +167,64 @@ class EditProfile extends Component {
   }
 
   render() {
+    const {
+      first_name,
+      photo_url,
+      last_name,
+      category,
+      content,
+      email,
+      biography,
+      openSnackbar,
+      snackbarMessage,
+      pristine
+    } = this.state
+
     return (
       <Main>
-        <Paper>
+        <StyledPaper>
           <FormContainer>
-            <Avatar src={this.state.photo_url} size={150} />
+            <Avatar src={photo_url} size={150} />
             <Uploader onDrop={this.onFilesDrop} />
+            <TextField disabled={true} value={this.props.addresses[0]} floatingLabelText="ETH address" />
             <TextField
               floatingLabelText="First Name"
               onChange={(event, newValue) => this.handleFieldChange('first_name', event, newValue)}
-              errorText={!this.state.first_name ? 'First Name is Required' : null}
-              value={this.state.first_name || ''}
+              errorText={!first_name && !pristine ? 'First Name is Required' : null}
+              value={first_name || ''}
             />
             <TextField
               floatingLabelText="Last Name"
               onChange={(event, newValue) => this.handleFieldChange('last_name', event, newValue)}
-              errorText={!this.state.last_name ? 'Last Name is Required' : null}
-              value={this.state.last_name || ''}
+              errorText={!last_name && !pristine ? 'Last Name is Required' : null}
+              value={last_name || ''}
             />
             <TextField
               floatingLabelText="Email Address"
               onChange={(event, newValue) => this.handleFieldChange('email', event, newValue)}
-              errorText={!this.state.email ? 'Email Address is Required' : null}
-              value={this.state.email || ''}
+              errorText={!email && !pristine ? 'Email Address is Required' : null}
+              value={email || ''}
             />
-            <CategoryDropDown onChange={this.handleCategoryChange} value={this.state.category} />
+            <CategoryDropdown onChange={this.handleCategoryChange} value={category} />
             <TextField
               floatingLabelText="Biography"
               onChange={(event, newValue) => this.handleFieldChange('biography', event, newValue)}
-              value={this.state.biography || ''}
+              value={biography || ''}
             />
             <TextField
               floatingLabelText="Content I'm Creating"
               onChange={(event, newValue) => this.handleFieldChange('content', event, newValue)}
-              value={this.state.content || ''}
+              value={content || ''}
             />
-            <span>Ethereum Address</span>
-            <span>{this.props.addresses[0]}</span>
-            <RaisedButton label="Save Profile" primary={true} onTouchTap={this.handleSave} />
+            <StyledRaisedButton label="Save Profile" primary={true} onTouchTap={this.handleSave} />
             <Snackbar
-              open={this.state.openSnackbar}
-              message={this.state.snackbarMessage}
+              open={openSnackbar}
+              message={snackbarMessage}
               autoHideDuration={4000}
               onRequestClose={this.handleRequestClose}
             />
           </FormContainer>
-        </Paper>
+        </StyledPaper>
       </Main>
     )
   }
