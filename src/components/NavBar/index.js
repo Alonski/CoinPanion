@@ -23,7 +23,7 @@ const Menu = (props, context) =>
   >
     <MenuItem data="/explore" primaryText="Explore" />
     <MenuItem data="/dashboard" primaryText="Dashboard" />
-    <MenuItem data="/profile" primaryText="Profile" />
+    <MenuItem data="/editprofile" primaryText="Edit My Profile" />
     <MenuItem data="/about" primaryText="About" />
   </IconMenu>
 

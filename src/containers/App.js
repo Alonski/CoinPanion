@@ -6,7 +6,7 @@ import { bindActionCreators } from 'redux'
 import NavBar from 'components/NavBar'
 import About from 'components/About'
 import Explore from 'components/Explore'
-import Profile from 'containers/ProfileWrapper'
+import EditProfile from 'containers/EditProfileWrapper'
 import Dashboard from 'components/Dashboard'
 import NoMatch from 'components/NoMatch'
 
@@ -31,7 +31,7 @@ class App extends Component {
             <Route exact path="/" component={Explore} />
             <Route path="/explore" component={Explore} />
             <Route path="/about" component={About} />
-            <Route path="/profile" component={Profile} />
+            <Route path="/editprofile" component={EditProfile} />
             <Route path="/dashboard" component={Dashboard} />
             <Route component={NoMatch} />
           </Switch>
