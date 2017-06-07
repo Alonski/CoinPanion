@@ -33,6 +33,7 @@ class App extends Component {
             <Route path="/about" component={About} />
             <Route path="/editprofile" component={EditProfile} />
             <Route path="/dashboard" component={Dashboard} />
+            <Route path="/profile/:id" component={Profile} />
             <Route component={NoMatch} />
           </Switch>
         </div>
