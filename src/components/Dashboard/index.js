@@ -7,6 +7,15 @@ import RaisedButton from 'material-ui/RaisedButton'
 import Snackbar from 'material-ui/Snackbar'
 import Paper from 'material-ui/Paper'
 
+import { List, ListItem } from 'material-ui/List'
+import Subheader from 'material-ui/Subheader'
+import Divider from 'material-ui/Divider'
+import IconMenu from 'material-ui/IconMenu'
+import MenuItem from 'material-ui/MenuItem'
+import IconButton from 'material-ui/IconButton'
+import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert'
+import { grey400, darkBlack } from 'material-ui/styles/colors'
+
 // import SimpleStorageContract from '../../../build/contracts/SimpleStorage.json'
 import VaultContract from '../../../build/contracts/Vault.json'
 import Conf from '../../../truffle.js'
@@ -25,6 +34,79 @@ const InnerContainer = styled.div`
   align-items: center;
   padding: 10px 10px 10px 10px;
 `
+
+const iconButtonElement = (
+  <IconButton touch={true} tooltip="more" tooltipPosition="bottom-left">
+    <MoreVertIcon color={grey400} />
+  </IconButton>
+)
+
+const rightIconMenu = (
+  <IconMenu iconButtonElement={iconButtonElement}>
+    <MenuItem>Send Mail</MenuItem>
+    <MenuItem>Tweet</MenuItem>
+    <MenuItem>Remove Coiner</MenuItem>
+  </IconMenu>
+)
+
+const CoinedByList = props =>
+  <div>
+    <List>
+      <Subheader>Coined By</Subheader>
+      <ListItem
+        leftAvatar={<Avatar src={props.photo_url} />}
+        rightIconButton={rightIconMenu}
+        primaryText="Alon Bukai"
+        secondaryText={
+          <p>
+            <span style={{ color: darkBlack }}>email@email.com</span><br />
+            Love the work you are doing! Keep it up!
+          </p>
+        }
+        secondaryTextLines={2}
+      />
+      <Divider inset={true} />
+      <ListItem
+        leftAvatar={<Avatar src={props.photo_url} />}
+        rightIconButton={rightIconMenu}
+        primaryText="Tim Reznich"
+        secondaryText={
+          <p>
+            <span style={{ color: darkBlack }}>email@email.com</span><br />
+            Sample Message Sent With Subscription
+          </p>
+        }
+        secondaryTextLines={2}
+      />
+      <Divider inset={true} />
+      <ListItem
+        leftAvatar={<Avatar src={props.photo_url} />}
+        rightIconButton={rightIconMenu}
+        primaryText="Rahul Sethuram"
+        secondaryText={
+          <p>
+            <span style={{ color: darkBlack }}>email@email.com</span><br />
+            Sample Message Sent With Subscription
+          </p>
+        }
+        secondaryTextLines={2}
+      />
+      <Divider inset={true} />
+      <ListItem
+        leftAvatar={<Avatar src={props.photo_url} />}
+        rightIconButton={rightIconMenu}
+        primaryText="Joseph P"
+        secondaryText={
+          <p>
+            <span style={{ color: darkBlack }}>email@email.com</span><br />
+            Sample Message Sent With Subscription
+          </p>
+        }
+        secondaryTextLines={2}
+      />
+
+    </List>
+  </div>
 
 class Dasboard extends Component {
   constructor(props) {
@@ -177,6 +259,13 @@ class Dasboard extends Component {
         <Main>
           <Paper>
             <InnerContainer>
+              <Avatar src={this.state.photo_url} size={150} />
+              <div>The Current Address is: {this.state.userAddress}</div>
+              <div>The Current User Balance is: {this.state.userBalance}</div>
+            </InnerContainer>
+          </Paper>
+          <Paper>
+            <InnerContainer>
               <span>Load Vault</span>
               <TextField
                 floatingLabelText="Amount to Load in WEI"
@@ -222,11 +311,59 @@ class Dasboard extends Component {
               />
             </InnerContainer>
           </Paper>
+        </Main>
+        <br />
+        <Main>
           <Paper>
             <InnerContainer>
-              <Avatar src="http://lorempixel.com/400/200/" size={150} />
-              <div>The Current Address is: {this.state.userAddress}</div>
-              <div>The Current User Balance is: {this.state.userBalance}</div>
+              <CoinedByList photo_url={this.state.photo_url} />
+            </InnerContainer>
+          </Paper>
+          <Paper>
+            <InnerContainer>
+              <span>Load Vault</span>
+              <TextField
+                floatingLabelText="Amount to Load in WEI"
+                type="number"
+                onChange={(event, newValue) => this.handleFieldChange('loadVaultValue', event, newValue)}
+                errorText={!this.state.loadVaultValue ? 'Value is Required' : null}
+                value={this.state.loadVaultValue || ''}
+              />
+              <br />
+              <div>Vault Address: {this.state.vaultAddress}</div>
+              <div>The Current Vault Balance is: {this.state.vaultBalanceEther} ETH</div>
+              <RaisedButton label="Load Vault" primary={true} onTouchTap={this.handleLoadVault} />
+              {/*<TextField
+                floatingLabelText="Last Name"
+                onChange={(event, newValue) => this.handleFieldChange('last_name', event, newValue)}
+                errorText={!this.state.last_name ? 'Last Name is Required' : null}
+                value={this.state.last_name || ''}
+              />
+              <TextField
+                floatingLabelText="Email Address"
+                onChange={(event, newValue) => this.handleFieldChange('email', event, newValue)}
+                errorText={!this.state.email ? 'Email Address is Required' : null}
+                value={this.state.email || ''}
+              />
+              <TextField
+                floatingLabelText="Biography"
+                onChange={(event, newValue) => this.handleFieldChange('biography', event, newValue)}
+                value={this.state.biography}
+              />
+              <TextField
+                floatingLabelText="Content I'm Creating"
+                onChange={(event, newValue) => this.handleFieldChange('content', event, newValue)}
+                value={this.state.content}
+              />
+              <span>Ethereum Address</span>
+              <span>{this.props.addresses[0]}</span>
+              <RaisedButton label="Save Profile" primary={true} onTouchTap={this.handleSave} />*/}
+              <Snackbar
+                open={this.state.openSnackbar}
+                message={this.state.snackbarMessage}
+                autoHideDuration={4000}
+                onRequestClose={this.handleRequestClose}
+              />
             </InnerContainer>
           </Paper>
         </Main>
