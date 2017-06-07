@@ -1,16 +1,14 @@
 import React, { Component } from 'react'
-import { connect } from 'react-redux'
+import { throttle } from 'throttle-debounce'
 import styled from 'styled-components'
 import { GridList } from 'material-ui/GridList'
-import DropDownMenu from 'material-ui/DropDownMenu'
-import MenuItem from 'material-ui/MenuItem'
 import { Card, CardActions, CardHeader, CardTitle, CardText } from 'material-ui/Card'
 import Chip from 'material-ui/Chip'
 import Measure from 'react-measure'
-import { firebase, helpers } from 'react-redux-firebase'
-const { dataToJS } = helpers
+import { firebaseConnect } from 'react-redux-firebase'
 import FlatButton from 'material-ui/FlatButton'
 import { blue300 } from 'material-ui/styles/colors'
+import DropDown from './Dropdown'
 
 const Main = styled.div`
   display: flex;
@@ -43,32 +41,53 @@ const StyledCardActions = styled(CardActions)`
   padding-top: 15px;
 `
 
-class DropDown extends Component {
-  constructor(props) {
-    super(props)
-    this.state = { value: 1 }
-  }
-
-  handleChange = (event, index, value) => this.setState({ value })
-
-  render() {
-    return (
-      <DropDownMenu value={this.state.value} onChange={this.handleChange}>
-        <MenuItem value={1} primaryText="Newest" />
-        <MenuItem value={2} primaryText="Trending" />
-        <MenuItem value={3} primaryText="Top" />
-        <MenuItem value={4} primaryText="Search by Interest" />
-      </DropDownMenu>
-    )
-  }
-}
-
+@firebaseConnect()
 class Explore extends Component {
   state = {
     dimensions: {
       width: -1,
       height: -1
+    },
+    offset: 0,
+    users: [],
+    isLoading: false
+  }
+
+  constructor(props) {
+    super(props)
+    this.handleLoadMore = throttle(300, this.handleLoadMore)
+  }
+
+  componentDidMount() {
+    const usersRef = this.props.firebase.database().ref('users').limitToFirst(50)
+    usersRef.on('value', snapshot => {
+      this.setState({ users: snapshot.val() })
+    })
+    document.addEventListener('scroll', this.handleScroll)
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('scroll', this.handleScroll)
+  }
+
+  handleScroll = e => {
+    const coefficient = 0.7
+    const el = e.target.body
+    if (!el) return
+    if (el.scrollTop > el.scrollHeight * coefficient && !this.state.isLoading) {
+      this.setState({ isLoading: true })
+      this.handleLoadMore()
     }
+  }
+
+  handleLoadMore = () => {
+    const { offset, users } = this.state
+    const newOffset = offset + 50
+    this.setState({ offset: newOffset })
+    const usersRef = this.props.firebase.database().ref('users')
+    usersRef.orderByChild('id').endAt(newOffset).once('value', snapshot => {
+      this.setState({ users: Object.assign(users, snapshot.val()), isLoading: false })
+    })
   }
 
   getColumnsNum = () => {
@@ -80,6 +99,7 @@ class Explore extends Component {
   }
 
   render() {
+    const { users } = this.state
     return (
       <Main>
         <Container>
@@ -91,29 +111,33 @@ class Explore extends Component {
               this.setState({ dimensions: contentRect.bounds })
             }}
           >
-            {({ measureRef }) => (
+            {({ measureRef }) =>
               <div ref={measureRef}>
                 <StyledGridList cellHeight="auto" cols={this.getColumnsNum()}>
-                  {this.props.users.map(user => (
-                    <StyledCard key={user.id}>
-                      <CardHeader
-                        title={<Chip backgroundColor={blue300}>{user.eth_address.slice(0, 15)}</Chip>}
-                        avatar={user.photo_url || 'https://api.adorable.io/avatars/285/abott@adorable.png'}
-                      />
-                      <CardTitle
-                        title={`${user.first_name} ${user.last_name}`}
-                        subtitle={`is creating ${user.content || user.category}`}
-                      />
-                      <StyledCardText>{user.biography}</StyledCardText>
-                      <StyledCardActions>
-                        <FlatButton primary={true} label="View more" />
-                        <Chip>{user.category}</Chip>
-                      </StyledCardActions>
-                    </StyledCard>
-                  ))}
+                  {users &&
+                    Object.keys(users).map(id =>
+                      <StyledCard key={id}>
+                        <CardHeader
+                          title={
+                            <Chip backgroundColor={blue300}>
+                              {users[id].eth_address && users[id].eth_address.slice(0, 15)}
+                            </Chip>
+                          }
+                          avatar={users[id].photo_url || 'https://api.adorable.io/avatars/285/abott@adorable.png'}
+                        />
+                        <CardTitle
+                          title={`${users[id].first_name} ${users[id].last_name}`}
+                          subtitle={`is creating ${users[id].content || users[id].category}`}
+                        />
+                        <StyledCardText>{users[id].biography}</StyledCardText>
+                        <StyledCardActions>
+                          <FlatButton primary={true} label="View more" />
+                          <Chip>{users[id].category}</Chip>
+                        </StyledCardActions>
+                      </StyledCard>
+                    )}
                 </StyledGridList>
-              </div>
-            )}
+              </div>}
           </Measure>
         </Container>
       </Main>
@@ -121,11 +145,4 @@ class Explore extends Component {
   }
 }
 
-Explore.defaultProps = {
-  users: []
-}
-
-const fbWrappedComponent = firebase(['/users'])(Explore)
-export default connect(({ firebase }) => ({
-  users: dataToJS(firebase, 'users')
-}))(fbWrappedComponent)
+export default Explore
