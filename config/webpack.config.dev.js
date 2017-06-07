@@ -1,21 +1,21 @@
-const autoprefixer = require("autoprefixer");
-const webpack = require("webpack");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
-const InterpolateHtmlPlugin = require("react-dev-utils/InterpolateHtmlPlugin");
-const WatchMissingNodeModulesPlugin = require("react-dev-utils/WatchMissingNodeModulesPlugin");
-const getClientEnvironment = require("./env");
-const paths = require("./paths");
+const autoprefixer = require('autoprefixer')
+const webpack = require('webpack')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin')
+const InterpolateHtmlPlugin = require('react-dev-utils/InterpolateHtmlPlugin')
+const WatchMissingNodeModulesPlugin = require('react-dev-utils/WatchMissingNodeModulesPlugin')
+const getClientEnvironment = require('./env')
+const paths = require('./paths')
 
 // Webpack uses `publicPath` to determine where the app is being served from.
 // In development, we always serve from the root. This makes config easier.
-const publicPath = "/";
+const publicPath = '/'
 // `publicUrl` is just like `publicPath`, but we will provide it to our app
 // as %PUBLIC_URL% in `index.html` and `process.env.PUBLIC_URL` in JavaScript.
 // Omit trailing slash as %PUBLIC_PATH%/xyz looks better than %PUBLIC_PATH%xyz.
-const publicUrl = "";
+const publicUrl = ''
 // Get environment variables to inject into our app.
-const env = getClientEnvironment(publicUrl);
+const env = getClientEnvironment(publicUrl)
 
 // This is the development configuration.
 // It is focused on developer experience and fast rebuilds.
@@ -23,13 +23,13 @@ const env = getClientEnvironment(publicUrl);
 module.exports = {
   // You may want 'eval' instead if you prefer to see the compiled output in DevTools.
   // See the discussion in https://github.com/facebookincubator/create-react-app/issues/343.
-  devtool: "cheap-module-source-map",
+  devtool: 'cheap-module-source-map',
   // These are the "entry points" to our application.
   // This means they will be the "root" imports that are included in JS bundle.
   // The first two entry points enable "hot" CSS and auto-refreshes for JS.
   entry: [
     'react-hot-loader/patch',
-     require.resolve('react-dev-utils/webpackHotDevClient'),
+    require.resolve('react-dev-utils/webpackHotDevClient'),
     paths.appIndexJs
     // We include the app code last so that if there is a runtime error during
     // initialization, it doesn't blow up the WebpackDevServer client, and
@@ -43,17 +43,17 @@ module.exports = {
     // This does not produce a real file. It's just the virtual path that is
     // served by WebpackDevServer in development. This is the JS bundle
     // containing code from all our entry points, and the Webpack runtime.
-    filename: "static/js/bundle.js",
+    filename: 'static/js/bundle.js',
     // This is the URL that app is served from. We use "/" in development.
     publicPath: publicPath
   },
   resolve: {
     modules: paths.nodePaths,
-    extensions: [".js", ".json", ".jsx"],
+    extensions: ['.js', '.json', '.jsx'],
     alias: {
       // Support React Native Web
       // https://www.smashingmagazine.com/2016/08/a-glimpse-into-the-future-with-react-native-for-web/
-      "react-native": "react-native-web"
+      'react-native': 'react-native-web'
     }
   },
 
@@ -75,35 +75,25 @@ module.exports = {
       // A missing `test` is equivalent to a match.
       {
         test: /\.(js|jsx)$/,
-        loader: "eslint-loader",
-        enforce: "pre",
+        loader: 'eslint-loader',
+        enforce: 'pre',
         include: paths.appSrc
       },
       {
-        exclude: [
-          /\.html$/,
-          /\.(js|jsx)$/,
-          /\.css$/,
-          /\.json$/,
-          /\.woff$/,
-          /\.woff2$/,
-          /\.(ttf|svg|eot)$/
-        ],
-        loader: "url-loader",
+        exclude: [/\.html$/, /\.(js|jsx)$/, /\.css$/, /\.json$/, /\.woff$/, /\.woff2$/, /\.(ttf|svg|eot)$/],
+        loader: 'url-loader',
         query: {
           limit: 10000,
-          name: "static/media/[name].[hash:8].[ext]"
+          name: 'static/media/[name].[hash:8].[ext]'
         }
       },
       // Process JS with Babel.
       {
         test: /\.(js|jsx)$/,
         include: paths.appSrc,
-        loader: "babel-loader",
+        loader: 'babel-loader',
         query: {
-          plugins: [
-            'react-hot-loader/babel'
-          ]
+          plugins: ['react-hot-loader/babel']
         }
       },
       // "postcss" loader applies autoprefixer to our CSS.
@@ -119,36 +109,36 @@ module.exports = {
       // allow it implicitly so we also enable it.
       {
         test: /\.json$/,
-        loader: "json-loader"
+        loader: 'json-loader'
       },
       // "file" loader for svg
       {
         test: /\.svg$/,
-        loader: "file-loader",
+        loader: 'file-loader',
         query: {
-          name: "static/media/[name].[hash:8].[ext]"
+          name: 'static/media/[name].[hash:8].[ext]'
         }
       },
       // "file" loader for fonts
       {
         test: /\.woff$/,
-        loader: "file-loader",
+        loader: 'file-loader',
         query: {
-          name: "fonts/[name].[hash].[ext]"
+          name: 'fonts/[name].[hash].[ext]'
         }
       },
       {
         test: /\.woff2$/,
-        loader: "file-loader",
+        loader: 'file-loader',
         query: {
-          name: "fonts/[name].[hash].[ext]"
+          name: 'fonts/[name].[hash].[ext]'
         }
       },
       {
         test: /\.(ttf|eot)$/,
-        loader: "file-loader",
+        loader: 'file-loader',
         query: {
-          name: "fonts/[name].[hash].[ext]"
+          name: 'fonts/[name].[hash].[ext]'
         }
       }
       // Truffle solidity loader to watch for changes in Solitiy files and hot
@@ -193,13 +183,13 @@ module.exports = {
       options: {
         postcss: [
           autoprefixer({
-          browsers: [
-            ">1%",
-            "last 4 versions",
-            "Firefox ESR",
-            "not ie < 9" // React doesn't support IE8 anyway
-          ]
-        }),
+            browsers: [
+              '>1%',
+              'last 4 versions',
+              'Firefox ESR',
+              'not ie < 9' // React doesn't support IE8 anyway
+            ]
+          })
         ]
       }
     })
@@ -207,8 +197,8 @@ module.exports = {
   // Some libraries import Node modules but don't use them in the browser.
   // Tell Webpack to provide empty mocks for them so importing them works.
   node: {
-    fs: "empty",
-    net: "empty",
-    tls: "empty"
+    fs: 'empty',
+    net: 'empty',
+    tls: 'empty'
   }
-};
+}
