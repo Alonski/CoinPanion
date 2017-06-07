@@ -32,6 +32,7 @@ const FormContainer = styled.div`
 
 const categories = [
   'None',
+  'Developer',
   'Video & Film',
   'Podcasts',
   'Comics',
@@ -101,6 +102,7 @@ class EditProfile extends Component {
       biography: '',
       eth_address: '',
       photo_url: '',
+      id: '',
       openSnackbar: false,
       snackbarMessage: ''
     }
@@ -113,20 +115,50 @@ class EditProfile extends Component {
       last_name: this.state.last_name,
       email: this.state.email,
       category: this.state.category,
-      content: this.state.content,
-      biography: this.state.biography,
-      photo_url: this.state.photo_url,
       eth_address: myAddress // get address from app state so there is no danger of being manipulated from front-end
     }
+    if (this.state.id) {
+      userProfile.id = this.state.id
+    }
+    if (this.state.photo_url) {
+      userProfile.photo_url = this.state.photo_url
+    }
+    if (this.state.biography) {
+      userProfile.biography = this.state.biography
+    }
+    if (this.state.content) {
+      userProfile.content = this.state.content
+    }
+    // required fields
     if (this.state.first_name && this.state.last_name && this.state.email && myAddress) {
-      this.props.firebase.set(`/users/${myAddress}`, userProfile).then((success, error) => {
-        if (error) {
-          console.error(error)
-          this.setState({ openSnackbar: true, snackbarMessage: 'Error: Profile not saved' })
-        } else {
-          this.setState({ openSnackbar: true, snackbarMessage: 'Profile saved' })
-        }
-      })
+      if (this.state.id) {
+        // update profile
+        this.props.firebase.set(`/users/${this.state.id}`, userProfile).then((success, error) => {
+          if (error) {
+            console.error(error)
+            this.setState({ openSnackbar: true, snackbarMessage: 'Error: Profile not created' })
+          } else {
+            this.setState({ openSnackbar: true, snackbarMessage: 'Profile created' })
+          }
+        })
+      } else {
+        // create new profile
+        this.props.firebase
+          .push('users', userProfile)
+          .then((snap, error) => {
+            console.log(snap)
+            // add id as key
+            this.props.firebase.update(`users/${snap.key}`, { id: snap.key })
+          })
+          .then((success, error) => {
+            if (error) {
+              console.error(error)
+              this.setState({ openSnackbar: true, snackbarMessage: 'Error: Profile not updated' })
+            } else {
+              this.setState({ openSnackbar: true, snackbarMessage: 'Profile updated' })
+            }
+          })
+      }
     }
   }
 
@@ -144,25 +176,44 @@ class EditProfile extends Component {
     // Uploads files and push's objects containing metadata to database at dbPath
     // uploadFiles(storagePath, files, dbPath)
     this.props.firebase.uploadFiles(filesPath, files, filesPath).then((resolve, reject) => {
-      console.log(resolve)
-      const photoURL = resolve[0].File.downloadURL
-      this.setState({ photo_url: photoURL })
+      if (reject) {
+        console.error(reject)
+        this.setState({ openSnackbar: true, snackbarMessage: 'Error: Photo not uploaded' })
+      } else {
+        console.log(resolve)
+        const photoURL = resolve[0].File.downloadURL
+        this.setState({ photo_url: photoURL })
+        console.log(this.state)
+      }
     })
   }
 
   componentWillReceiveProps() {
     const myAddress = this.props.addresses[0]
-    if (this.props.users && this.props.users[myAddress]) {
-      const myProfile = this.props.users[myAddress]
-      this.setState({
-        first_name: myProfile.first_name,
-        last_name: myProfile.last_name,
-        email: myProfile.email,
-        category: myProfile.category,
-        content: myProfile.content,
-        biography: myProfile.biography,
-        photo_url: myProfile.photo_url
-      })
+    if (myAddress) {
+      this.props.firebase
+        .database()
+        .ref()
+        .child('users')
+        .orderByChild('eth_address')
+        .equalTo(myAddress)
+        .once('value', snap => {
+          if (snap.val()) {
+            console.log(snap)
+            console.log(snap.val())
+            const myProfile = Object.values(snap.val())[0] // only 1 value should exist for an eth address
+            this.setState({
+              first_name: myProfile.first_name,
+              last_name: myProfile.last_name,
+              email: myProfile.email,
+              category: myProfile.category || this.state.category,
+              content: myProfile.content,
+              biography: myProfile.biography,
+              photo_url: this.state.photo_url || myProfile.photo_url,
+              id: myProfile.id
+            })
+          }
+        })
     }
   }
 
@@ -195,12 +246,12 @@ class EditProfile extends Component {
             <TextField
               floatingLabelText="Biography"
               onChange={(event, newValue) => this.handleFieldChange('biography', event, newValue)}
-              value={this.state.biography}
+              value={this.state.biography || ''}
             />
             <TextField
               floatingLabelText="Content I'm Creating"
               onChange={(event, newValue) => this.handleFieldChange('content', event, newValue)}
-              value={this.state.content}
+              value={this.state.content || ''}
             />
             <span>Ethereum Address</span>
             <span>{this.props.addresses[0]}</span>
@@ -222,8 +273,7 @@ EditProfile.defaultProps = {
   userProfile: {}
 }
 
-const fbWrappedComponent = firebase([{ type: 'once', path: '/users' }, 'uploadedFiles'])(EditProfile)
+const fbWrappedComponent = firebase(['uploadedFiles'])(EditProfile)
 export default connect(({ firebase }) => ({
-  users: dataToJS(firebase, 'users'),
   uploadedFiles: dataToJS(firebase, 'uploadedFiles')
 }))(fbWrappedComponent)
