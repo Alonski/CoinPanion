@@ -93,13 +93,14 @@ class EditProfile extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      firstName: '',
-      lastName: '',
-      emailAddress: '',
+      first_name: '',
+      last_name: '',
+      email: '',
       category: 'None',
       content: '',
       biography: '',
-      ethereumAddress: '',
+      eth_address: '',
+      photo_url: '',
       openSnackbar: false,
       snackbarMessage: ''
     }
@@ -108,16 +109,16 @@ class EditProfile extends Component {
   handleSave = event => {
     const myAddress = this.props.addresses[0]
     const userProfile = {
-      firstName: this.state.firstName,
-      lastName: this.state.lastName,
-      emailAddress: this.state.emailAddress,
+      first_name: this.state.first_name,
+      last_name: this.state.last_name,
+      email: this.state.email,
       category: this.state.category,
       content: this.state.content,
       biography: this.state.biography,
-      photoURL: this.state.photoURL,
-      ethereumAddress: myAddress // get address from app state so there is no danger of being manipulated from front-end
+      photo_url: this.state.photo_url,
+      eth_address: myAddress // get address from app state so there is no danger of being manipulated from front-end
     }
-    if (this.state.firstName && this.state.lastName && this.state.emailAddress && myAddress) {
+    if (this.state.first_name && this.state.last_name && this.state.email && myAddress) {
       this.props.firebase.set(`/users/${myAddress}`, userProfile).then((success, error) => {
         if (error) {
           console.error(error)
@@ -138,18 +139,6 @@ class EditProfile extends Component {
     obj[stateKey] = newValue // so key can be programatically assigned
     this.setState(obj)
   }
-  handleFullNameChange = (event, newValue) => {
-    if (!newValue) {
-      this.setState({ fullNameError: 'Full name is required' })
-    } else {
-      this.setState({ fullNameError: false })
-      this.setState({ fullName: newValue })
-    }
-  }
-
-  handleBiographyChange = (event, newValue) => {
-    this.setState({ biography: newValue })
-  }
 
   onFilesDrop = files => {
     // Uploads files and push's objects containing metadata to database at dbPath
@@ -157,7 +146,7 @@ class EditProfile extends Component {
     this.props.firebase.uploadFiles(filesPath, files, filesPath).then((resolve, reject) => {
       console.log(resolve)
       const photoURL = resolve[0].File.downloadURL
-      this.setState({ photoURL: photoURL })
+      this.setState({ photo_url: photoURL })
     })
   }
 
@@ -166,13 +155,13 @@ class EditProfile extends Component {
     if (this.props.users && this.props.users[myAddress]) {
       const myProfile = this.props.users[myAddress]
       this.setState({
-        firstName: myProfile.firstName,
-        lastName: myProfile.lastName,
-        emailAddress: myProfile.emailAddress,
+        first_name: myProfile.first_name,
+        last_name: myProfile.last_name,
+        email: myProfile.email,
         category: myProfile.category,
         content: myProfile.content,
         biography: myProfile.biography,
-        photoURL: myProfile.photoURL
+        photo_url: myProfile.photo_url
       })
     }
   }
@@ -182,25 +171,25 @@ class EditProfile extends Component {
       <Main>
         <Paper>
           <FormContainer>
-            <Avatar src={this.state.photoURL} size={150} />
+            <Avatar src={this.state.photo_url} size={150} />
             <Uploader onDrop={this.onFilesDrop} />
             <TextField
               floatingLabelText="First Name"
-              onChange={(event, newValue) => this.handleFieldChange('firstName', event, newValue)}
-              errorText={!this.state.firstName ? 'First Name is Required' : null}
-              value={this.state.firstName}
+              onChange={(event, newValue) => this.handleFieldChange('first_name', event, newValue)}
+              errorText={!this.state.first_name ? 'First Name is Required' : null}
+              value={this.state.first_name || ''}
             />
             <TextField
               floatingLabelText="Last Name"
-              onChange={(event, newValue) => this.handleFieldChange('lastName', event, newValue)}
-              errorText={!this.state.lastName ? 'Last Name is Required' : null}
-              value={this.state.lastName}
+              onChange={(event, newValue) => this.handleFieldChange('last_name', event, newValue)}
+              errorText={!this.state.last_name ? 'Last Name is Required' : null}
+              value={this.state.last_name || ''}
             />
             <TextField
               floatingLabelText="Email Address"
-              onChange={(event, newValue) => this.handleFieldChange('emailAddress', event, newValue)}
-              errorText={!this.state.emailAddress ? 'Email Address is Required' : null}
-              value={this.state.emailAddress}
+              onChange={(event, newValue) => this.handleFieldChange('email', event, newValue)}
+              errorText={!this.state.email ? 'Email Address is Required' : null}
+              value={this.state.email || ''}
             />
             <CategoryDropDown onChange={this.handleCategoryChange} value={this.state.category} />
             <TextField
