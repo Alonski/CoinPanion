@@ -17,4 +17,4 @@ npm-debug.log
 .truffle-solidity-loader
 
 # dev
-devConfig.js
+# devConfig.js

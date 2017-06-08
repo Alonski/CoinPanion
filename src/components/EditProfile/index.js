@@ -137,6 +137,10 @@ class EditProfile extends Component {
     })
   }
 
+  handleRequestClose = event => {
+    this.setState({ openSnackbar: false })
+  }
+
   componentWillReceiveProps() {
     const myAddress = this.props.addresses[0]
     if (myAddress) {
