@@ -8,6 +8,7 @@ import About from 'components/About'
 import Explore from 'components/Explore'
 import EditProfile from 'containers/EditProfileWrapper'
 import Dashboard from 'containers/DashboardWrapper'
+import Profile from 'containers/ProfileWrapper'
 import NoMatch from 'components/NoMatch'
 
 import * as profileActions from '../actions/profile'
