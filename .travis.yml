@@ -1,0 +1,23 @@
+---
+language: node_js
+node_js:
+  - "6"
+
+  sudo: false
+
+  install:
+    - npm install
+
+  before_deploy:
+    - npm run build
+
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $GITHUB_TOKEN
+  local_dir: build_webpack
+  repo: "alonski/coinpanion"
+  project_name: coinpanion
+  target_branch: gh-pages
+  on:
+    branch: master
