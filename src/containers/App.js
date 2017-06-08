@@ -7,7 +7,7 @@ import NavBar from 'components/NavBar'
 import About from 'components/About'
 import Explore from 'components/Explore'
 import EditProfile from 'containers/EditProfileWrapper'
-import Dashboard from 'components/Dashboard'
+import Dashboard from 'containers/DashboardWrapper'
 import NoMatch from 'components/NoMatch'
 
 import * as profileActions from '../actions/profile'

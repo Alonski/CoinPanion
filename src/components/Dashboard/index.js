@@ -16,6 +16,7 @@ import CoinedByList from './CoinedByList'
 import VaultContract from '../../../build/contracts/Vault.json'
 import Conf from '../../../truffle.js'
 import Web3 from 'web3'
+import firebase from 'firebase'
 
 const Main = styled.div`
   display: flex;
@@ -46,12 +47,14 @@ class Dasboard extends Component {
       vaultAddress: '0x0',
       userBalance: 0,
       userAddress: '0x0',
-      photo_url: 'http://lorempixel.com/400/200/',
+      photo_url: null,
       web3: '',
       vault: '',
       openSnackbar: false,
       snackbarMessage: '',
-      pristine: true
+      pristine: true,
+      first_name: '',
+      last_name: ''
     }
   }
 
@@ -117,6 +120,27 @@ class Dasboard extends Component {
     })
   }
 
+  componentWillReceiveProps(nextProps) {
+    const myAddress = nextProps.addresses[0]
+    if (myAddress) {
+      firebase.database().ref().child('users').orderByChild('eth_address').equalTo(myAddress).on('value', snap => {
+        if (snap.val()) {
+          const myProfile = Object.values(snap.val())[0] // only 1 value should exist for an eth address
+          this.setState({
+            first_name: myProfile.first_name,
+            last_name: myProfile.last_name,
+            email: myProfile.email,
+            category: myProfile.category || this.state.category,
+            content: myProfile.content,
+            biography: myProfile.biography,
+            photo_url: myProfile.photo_url,
+            id: myProfile.id
+          })
+        }
+      })
+    }
+  }
+
   handleFieldChange = (stateKey, event, newValue) => {
     const obj = {}
     obj[stateKey] = newValue // so key can be programatically assigned
@@ -171,7 +195,8 @@ class Dasboard extends Component {
       loadVaultValue,
       openSnackbar,
       snackbarMessage,
-      pristine
+      pristine,
+      first_name
     } = this.state
     return (
       <div>
@@ -181,7 +206,9 @@ class Dasboard extends Component {
         <Main>
           <StyledPaper>
             <InnerContainer>
-              <Avatar src={photo_url} size={150} />
+              {photo_url
+                ? <Avatar src={photo_url} size={150} />
+                : <Avatar size={150}>{first_name.split('')[0]}</Avatar>}
               <List>
                 <ListItem
                   onClick={() => document.execCommand('copy')}
@@ -221,7 +248,7 @@ class Dasboard extends Component {
         <Main>
           <StyledPaper>
             <InnerContainer>
-              <CoinedByList photo_url={photo_url} />
+              <CoinedByList photo_url="http://lorempixel.com/400/200/" />
             </InnerContainer>
           </StyledPaper>
         </Main>
