@@ -1,22 +1,18 @@
 import React, { Component } from 'react'
 import styled from 'styled-components'
 
+import { List, ListItem } from 'material-ui/List'
 import Avatar from 'material-ui/Avatar'
 import TextField from 'material-ui/TextField'
 import RaisedButton from 'material-ui/RaisedButton'
 import Snackbar from 'material-ui/Snackbar'
 import Paper from 'material-ui/Paper'
-
-import { List, ListItem } from 'material-ui/List'
-import Subheader from 'material-ui/Subheader'
 import Divider from 'material-ui/Divider'
-import IconMenu from 'material-ui/IconMenu'
-import MenuItem from 'material-ui/MenuItem'
-import IconButton from 'material-ui/IconButton'
-import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert'
-import { grey400, darkBlack } from 'material-ui/styles/colors'
+import AccountIcon from 'material-ui/svg-icons/action/account-balance'
+import WalletIcon from 'material-ui/svg-icons/action/account-balance-wallet'
 
-// import SimpleStorageContract from '../../../build/contracts/SimpleStorage.json'
+import CoinedByList from './CoinedByList'
+
 import VaultContract from '../../../build/contracts/Vault.json'
 import Conf from '../../../truffle.js'
 import Web3 from 'web3'
@@ -35,78 +31,10 @@ const InnerContainer = styled.div`
   padding: 10px 10px 10px 10px;
 `
 
-const iconButtonElement = (
-  <IconButton touch={true} tooltip="more" tooltipPosition="bottom-left">
-    <MoreVertIcon color={grey400} />
-  </IconButton>
-)
-
-const rightIconMenu = (
-  <IconMenu iconButtonElement={iconButtonElement}>
-    <MenuItem>Send Mail</MenuItem>
-    <MenuItem>Tweet</MenuItem>
-    <MenuItem>Remove Coiner</MenuItem>
-  </IconMenu>
-)
-
-const CoinedByList = props =>
-  <div>
-    <List>
-      <Subheader>Coined By</Subheader>
-      <ListItem
-        leftAvatar={<Avatar src={props.photo_url} />}
-        rightIconButton={rightIconMenu}
-        primaryText="Alon Bukai"
-        secondaryText={
-          <p>
-            <span style={{ color: darkBlack }}>email@email.com</span><br />
-            Love the work you are doing! Keep it up!
-          </p>
-        }
-        secondaryTextLines={2}
-      />
-      <Divider inset={true} />
-      <ListItem
-        leftAvatar={<Avatar src={props.photo_url} />}
-        rightIconButton={rightIconMenu}
-        primaryText="Tim Reznich"
-        secondaryText={
-          <p>
-            <span style={{ color: darkBlack }}>email@email.com</span><br />
-            Sample Message Sent With Subscription
-          </p>
-        }
-        secondaryTextLines={2}
-      />
-      <Divider inset={true} />
-      <ListItem
-        leftAvatar={<Avatar src={props.photo_url} />}
-        rightIconButton={rightIconMenu}
-        primaryText="Rahul Sethuram"
-        secondaryText={
-          <p>
-            <span style={{ color: darkBlack }}>email@email.com</span><br />
-            Sample Message Sent With Subscription
-          </p>
-        }
-        secondaryTextLines={2}
-      />
-      <Divider inset={true} />
-      <ListItem
-        leftAvatar={<Avatar src={props.photo_url} />}
-        rightIconButton={rightIconMenu}
-        primaryText="Joseph P"
-        secondaryText={
-          <p>
-            <span style={{ color: darkBlack }}>email@email.com</span><br />
-            Sample Message Sent With Subscription
-          </p>
-        }
-        secondaryTextLines={2}
-      />
-
-    </List>
-  </div>
+const StyledPaper = styled(Paper)`
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+`
 
 class Dasboard extends Component {
   constructor(props) {
@@ -122,7 +50,8 @@ class Dasboard extends Component {
       web3: '',
       vault: '',
       openSnackbar: false,
-      snackbarMessage: ''
+      snackbarMessage: '',
+      pristine: true
     }
   }
 
@@ -143,8 +72,6 @@ class Dasboard extends Component {
 
     const provider = new Web3.providers.HttpProvider('http://' + host + ':' + port)
     const contract = require('truffle-contract')
-    // const simpleStorage = contract(SimpleStorageContract)
-    // simpleStorage.setProvider(provider)
     const vault = contract(VaultContract)
     vault.setProvider(provider)
 
@@ -161,23 +88,6 @@ class Dasboard extends Component {
     web3RPC.eth.getAccounts(function(error, accounts) {
       console.log(accounts)
       self.setState({ userAddress: accounts[0], userBalance: web3RPC.eth.getBalance(accounts[0]).toString() })
-      // simpleStorage
-      //   .deployed()
-      //   .then(function(instance) {
-      //     simpleStorageInstance = instance
-
-      //     // Stores a value of 5.
-      //     return simpleStorageInstance.set(5, { from: accounts[0] })
-      //   })
-      //   .then(function(result) {
-      //     // Get the value from the contract to prove it worked.
-      //     return simpleStorageInstance.get.call(accounts[0])
-      //   })
-      //   .then(function(result) {
-      //     // Update state with the result.
-      //     return self.setState({ storageValue: result.c[0] })
-      //   })
-
       vault.deployed().then(function(instance) {
         vaultInstance = instance
         self.setState({
@@ -210,6 +120,7 @@ class Dasboard extends Component {
   handleFieldChange = (stateKey, event, newValue) => {
     const obj = {}
     obj[stateKey] = newValue // so key can be programatically assigned
+    obj.pristine = false
     this.setState(obj)
   }
 
@@ -251,121 +162,68 @@ class Dasboard extends Component {
   }
 
   render() {
+    const {
+      photo_url,
+      userAddress,
+      userBalance,
+      vaultAddress,
+      vaultBalanceEther,
+      loadVaultValue,
+      openSnackbar,
+      snackbarMessage,
+      pristine
+    } = this.state
     return (
       <div>
         <Main>
           <h1>Dashboard</h1>
         </Main>
         <Main>
-          <Paper>
+          <StyledPaper>
             <InnerContainer>
-              <Avatar src={this.state.photo_url} size={150} />
-              <div>The Current Address is: {this.state.userAddress}</div>
-              <div>The Current User Balance is: {this.state.userBalance}</div>
+              <Avatar src={photo_url} size={150} />
+              <List>
+                <ListItem
+                  onClick={() => document.execCommand('copy')}
+                  secondaryText="Your address"
+                  primaryText={userAddress}
+                  leftIcon={<AccountIcon />}
+                />
+                <ListItem secondaryText="Your balance" primaryText={userBalance} leftIcon={<WalletIcon />} />
+              </List>
+              <Divider inset={true} />
+              <List>
+                <ListItem secondaryText="Vault address" primaryText={vaultAddress} leftIcon={<AccountIcon />} />
+                <ListItem secondaryText="Vault balance" primaryText={vaultBalanceEther} leftIcon={<WalletIcon />} />
+              </List>
             </InnerContainer>
-          </Paper>
-          <Paper>
             <InnerContainer>
-              <span>Load Vault</span>
+              <i>Load Vault</i>
               <TextField
                 floatingLabelText="Amount to Load in WEI"
                 type="number"
                 onChange={(event, newValue) => this.handleFieldChange('loadVaultValue', event, newValue)}
-                errorText={!this.state.loadVaultValue ? 'Value is Required' : null}
-                value={this.state.loadVaultValue || ''}
+                errorText={!loadVaultValue && !pristine ? 'Value is Required' : null}
+                value={loadVaultValue || ''}
               />
               <br />
-              <div>Vault Address: {this.state.vaultAddress}</div>
-              <div>The Current Vault Balance is: {this.state.vaultBalanceEther} ETH</div>
               <RaisedButton label="Load Vault" primary={true} onTouchTap={this.handleLoadVault} />
-              {/*<TextField
-                floatingLabelText="Last Name"
-                onChange={(event, newValue) => this.handleFieldChange('last_name', event, newValue)}
-                errorText={!this.state.last_name ? 'Last Name is Required' : null}
-                value={this.state.last_name || ''}
-              />
-              <TextField
-                floatingLabelText="Email Address"
-                onChange={(event, newValue) => this.handleFieldChange('email', event, newValue)}
-                errorText={!this.state.email ? 'Email Address is Required' : null}
-                value={this.state.email || ''}
-              />
-              <TextField
-                floatingLabelText="Biography"
-                onChange={(event, newValue) => this.handleFieldChange('biography', event, newValue)}
-                value={this.state.biography}
-              />
-              <TextField
-                floatingLabelText="Content I'm Creating"
-                onChange={(event, newValue) => this.handleFieldChange('content', event, newValue)}
-                value={this.state.content}
-              />
-              <span>Ethereum Address</span>
-              <span>{this.props.addresses[0]}</span>
-              <RaisedButton label="Save Profile" primary={true} onTouchTap={this.handleSave} />*/}
               <Snackbar
-                open={this.state.openSnackbar}
-                message={this.state.snackbarMessage}
+                open={openSnackbar}
+                message={snackbarMessage}
                 autoHideDuration={4000}
                 onRequestClose={this.handleRequestClose}
               />
             </InnerContainer>
-          </Paper>
+          </StyledPaper>
         </Main>
         <br />
         <Main>
-          <Paper>
+          <StyledPaper>
             <InnerContainer>
-              <CoinedByList photo_url={this.state.photo_url} />
+              <CoinedByList photo_url={photo_url} />
             </InnerContainer>
-          </Paper>
-          <Paper>
-            <InnerContainer>
-              <span>Load Vault</span>
-              <TextField
-                floatingLabelText="Amount to Load in WEI"
-                type="number"
-                onChange={(event, newValue) => this.handleFieldChange('loadVaultValue', event, newValue)}
-                errorText={!this.state.loadVaultValue ? 'Value is Required' : null}
-                value={this.state.loadVaultValue || ''}
-              />
-              <br />
-              <div>Vault Address: {this.state.vaultAddress}</div>
-              <div>The Current Vault Balance is: {this.state.vaultBalanceEther} ETH</div>
-              <RaisedButton label="Load Vault" primary={true} onTouchTap={this.handleLoadVault} />
-              {/*<TextField
-                floatingLabelText="Last Name"
-                onChange={(event, newValue) => this.handleFieldChange('last_name', event, newValue)}
-                errorText={!this.state.last_name ? 'Last Name is Required' : null}
-                value={this.state.last_name || ''}
-              />
-              <TextField
-                floatingLabelText="Email Address"
-                onChange={(event, newValue) => this.handleFieldChange('email', event, newValue)}
-                errorText={!this.state.email ? 'Email Address is Required' : null}
-                value={this.state.email || ''}
-              />
-              <TextField
-                floatingLabelText="Biography"
-                onChange={(event, newValue) => this.handleFieldChange('biography', event, newValue)}
-                value={this.state.biography}
-              />
-              <TextField
-                floatingLabelText="Content I'm Creating"
-                onChange={(event, newValue) => this.handleFieldChange('content', event, newValue)}
-                value={this.state.content}
-              />
-              <span>Ethereum Address</span>
-              <span>{this.props.addresses[0]}</span>
-              <RaisedButton label="Save Profile" primary={true} onTouchTap={this.handleSave} />*/}
-              <Snackbar
-                open={this.state.openSnackbar}
-                message={this.state.snackbarMessage}
-                autoHideDuration={4000}
-                onRequestClose={this.handleRequestClose}
-              />
-            </InnerContainer>
-          </Paper>
+          </StyledPaper>
         </Main>
       </div>
     )
