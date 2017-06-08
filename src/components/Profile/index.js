@@ -1,8 +1,7 @@
 import React, { Component } from 'react'
 import styled from 'styled-components'
 import { connect } from 'react-redux'
-import { firebase, helpers } from 'react-redux-firebase'
-const { dataToJS } = helpers
+import { firebase } from 'react-redux-firebase'
 import { Card, CardActions, CardHeader, CardTitle, CardText } from 'material-ui/Card'
 import Dialog from 'material-ui/Dialog'
 import FlatButton from 'material-ui/FlatButton'
@@ -33,7 +32,8 @@ class UserProfile extends Component {
   }
 
   validateCoining() {
-    if (isNaN(parseFloat(this.state.coinAmount))) {
+    const amount = parseFloat(this.state.coinAmount)
+    if (isNaN(amount) || amount < 0) {
       return false
     } else {
       return true
@@ -42,7 +42,24 @@ class UserProfile extends Component {
 
   handleCoining = () => {
     // PLACEHOLDER FOR LINKING TO CONTRACT FUNCTION
+    const amount = parseFloat(this.state.coinAmount)
+    if (amount <= 0 || !this.props.myAddress || !this.props.userProfile.eth_address) {
+      console.error('Invalid inputs.')
+      return false
+    }
+    this.props.firebase.push('coinings', {
+      coiner: this.props.myId,
+      coinee: this.props.userProfile.id,
+      eth_amount: amount
+    })
     this.setState({ open: false })
+  }
+
+  calculateCoiners() {
+    let totalCoinedAmount = this.props.coinings.reduce((ethSum, coining) => ethSum + coining.eth_amount, 0)
+    totalCoinedAmount = Math.round(totalCoinedAmount * 10000) / 10000
+    const totalCoiners = this.props.coinings.length
+    return `Coined by ${totalCoiners} for ${totalCoinedAmount} Eth/Month`
   }
 
   render() {
@@ -65,7 +82,7 @@ class UserProfile extends Component {
         <CardText>
           {userProfile.biography}
         </CardText>
-        <CardTitle title="Coined by 0 for 0.0 Eth/Month" />
+        <CardTitle title={this.calculateCoiners()} />
         <CardActions>
           <FlatButton label={`Coin ${userProfile.first_name}`} primary={true} onTouchTap={this.handleOpen} />
         </CardActions>
@@ -81,7 +98,7 @@ class UserProfile extends Component {
           <TextField
             defaultValue={this.state.coinAmount}
             floatingLabelText="Eth per Month"
-            errorText={this.validateCoining() ? null : 'Value must be a number'}
+            errorText={this.validateCoining() ? null : 'Value must be a positive number'}
             onChange={this.handleCoinAmountChange}
           />
         </Dialog>
@@ -95,35 +112,74 @@ class Profile extends Component {
     super(props)
     this.state = {
       userExists: false,
-      userProfile: {}
+      userProfile: {},
+      coinings: [],
+      myAddress: ''
     }
   }
 
-  componentDidMount() {
-    console.log(this.props.users)
+  componentWillReceiveProps({ addresses }) {
+    if (addresses && addresses[0]) {
+      this.setState({ myAddress: addresses[0] })
+      this.props.firebase
+        .database()
+        .ref()
+        .child('users')
+        .orderByChild('eth_address')
+        .equalTo(addresses[0])
+        .once('value', snap => {
+          if (snap.val()) {
+            const myProfile = Object.values(snap.val())[0] // only 1 value should exist for an eth address
+            this.setState({
+              myId: myProfile.id
+            })
+          }
+        })
+    }
   }
 
-  componentWillReceiveProps({ users }) {
+  componentWillMount() {
     const userId = this.props.match.params.id
-    if (users && users[userId]) {
-      const userProfile = users[userId]
-      this.setState({
-        userExists: true,
-        userProfile: userProfile
-      })
-    }
+    this.props.firebase.database().ref().child('users').orderByChild('id').equalTo(userId).once('value', snap => {
+      if (snap.val()) {
+        const userProfile = Object.values(snap.val())[0] // only 1 value should exist for an id
+        this.props.firebase
+          .database()
+          .ref()
+          .child('coinings')
+          .orderByChild('coinee')
+          .equalTo(userProfile.id)
+          .on('value', snap => {
+            let coinings
+            if (snap.val()) {
+              coinings = Object.values(snap.val())
+            }
+            this.setState({
+              userExists: true,
+              userProfile: userProfile,
+              coinings: coinings
+            })
+          })
+      }
+    })
   }
 
   render() {
     return (
       <Main>
-        {this.state.userExists ? <UserProfile userProfile={this.state.userProfile} /> : <h1>User not found</h1>}
+        {this.state.userExists
+          ? <UserProfile
+              userProfile={this.state.userProfile}
+              coinings={this.state.coinings}
+              firebase={this.props.firebase}
+              myAddress={this.state.myAddress}
+              myId={this.state.myId}
+            />
+          : <h1>User not found</h1>}
       </Main>
     )
   }
 }
 
-const fbWrappedComponent = firebase([{ type: 'once', path: '/users' }])(Profile)
-export default connect(({ firebase }) => ({
-  users: dataToJS(firebase, 'users')
-}))(fbWrappedComponent)
+const fbWrappedComponent = firebase()(Profile)
+export default connect()(fbWrappedComponent)
