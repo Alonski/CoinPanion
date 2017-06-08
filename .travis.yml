@@ -6,7 +6,7 @@ node_js:
 sudo: false
 
 before_install:
-  - npm install -g node_gyp
+  - npm install -g node-gyp
   - npm install -g marked
   - npm install libavahi-compat-libdnssd-dev
 
