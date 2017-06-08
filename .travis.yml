@@ -3,13 +3,13 @@ language: node_js
 node_js:
   - "6"
 
-  sudo: false
+sudo: false
 
-  install:
-    - npm install
+install:
+  - npm install
 
-  before_deploy:
-    - npm run build
+before_deploy:
+  - npm run build
 
 deploy:
   provider: pages
