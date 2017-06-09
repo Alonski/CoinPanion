@@ -131,7 +131,7 @@ class Explore extends Component {
                         />
                         <StyledCardText>{users[id].biography}</StyledCardText>
                         <StyledCardActions>
-                          <FlatButton primary={true} label="View more" />
+                          <FlatButton primary={true} label="View more" href={`profile/${id}`} />
                           <Chip>{users[id].category}</Chip>
                         </StyledCardActions>
                       </StyledCard>

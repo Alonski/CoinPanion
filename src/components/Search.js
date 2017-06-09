@@ -78,6 +78,7 @@ export default class SearchBar extends Component {
             dataSourceConfig={this.props.dataSourceConfig}
             maxSearchResults={10}
             filter={AutoComplete.noFilter}
+            onNewRequest={this.props.onRequestSearch}
           />
         </div>
         <IconButton

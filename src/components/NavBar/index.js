@@ -42,11 +42,17 @@ class NavBar extends Component {
       <AppBar title="CoinPanion" iconClassNameRight="muidocs-icon-navigation-expand-more" iconElementLeft={<Menu />}>
         <SearchBar
           onChange={this.handleSearch}
-          onRequestSearch={this.handleSearch}
+          onRequestSearch={({ value }) => {
+            this.context.router.history.push(`/profile/${value.id}`)
+          }}
           style={{ alignSelf: 'center', borderRadius: 50 }}
           dataSource={this.props.data}
           hintText="Type anything"
           maxSearchResults={10}
+          dataSourceConfig={{
+            text: 'text',
+            value: 'value'
+          }}
         />
       </AppBar>
     )
@@ -59,6 +65,10 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return bindActionCreators({ ...searchActions }, dispatch)
+}
+
+NavBar.contextTypes = {
+  router: PropTypes.any
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(NavBar)

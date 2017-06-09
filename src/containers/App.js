@@ -8,6 +8,7 @@ import About from 'components/About'
 import Explore from 'components/Explore'
 import EditProfile from 'containers/EditProfileWrapper'
 import Dashboard from 'containers/DashboardWrapper'
+import Profile from 'containers/ProfileWrapper'
 import NoMatch from 'components/NoMatch'
 
 import * as profileActions from '../actions/profile'
@@ -33,6 +34,7 @@ class App extends Component {
             <Route path="/about" component={About} />
             <Route path="/editprofile" component={EditProfile} />
             <Route path="/dashboard" component={Dashboard} />
+            <Route path="/profile/:id" component={Profile} />
             <Route component={NoMatch} />
           </Switch>
         </div>
