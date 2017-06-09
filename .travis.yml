@@ -29,12 +29,11 @@ before_deploy:
   - npm run build
 
 deploy:
-  provider: pages
+  provider: surge
+  project: ./build_webpack/
+  domain: coinpanion.surge.sh 
   skip_cleanup: true
-  github_token: $GITHUB_TOKEN
-  local_dir: build_webpack
   repo: "alonski/coinpanion"
   project_name: coinpanion
-  target_branch: gh-pages
   on:
     branch: master

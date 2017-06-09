@@ -47,6 +47,7 @@
     "status-dev-cli": "^3.2.8",
     "strip-ansi": "3.0.1",
     "style-loader": "0.13.1",
+    "surge": "^0.19.0",
     "truffle-contract": "^1.1.8",
     "truffle-solidity-loader": "0.0.8",
     "url-loader": "0.5.7",
