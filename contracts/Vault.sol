@@ -149,6 +149,12 @@ contract Vault is Escapable {
 // Spender Interface
 ////////
 
+    function sendPayment(address _recipient, uint _amount) returns(uint) {
+        if (!_recipient.send(_amount)) {  // Make the payment
+            throw;
+        }
+    }
+
     /// @notice only `allowedSpenders[]` Creates a new `Payment`
     /// @param _name Brief description of the payment that is authorized
     /// @param _reference External reference of the payment

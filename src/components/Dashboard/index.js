@@ -91,6 +91,8 @@ class Dasboard extends Component {
     const vault = contract(VaultContract)
     vault.setProvider(provider)
 
+    window.vaulty = vault
+
     // Get Web3 so we can get our accounts.
     const web3 = new Web3(provider)
 
@@ -108,24 +110,43 @@ class Dasboard extends Component {
         userAddress: userAddress,
         userBalance: web3.eth.getBalance(userAddress).toString()
       })
-
-      vault
-        .deployed()
-        .then(function(instance) {
-          vaultInstance = instance
-          window.vaulty = vaultInstance
-          return vaultInstance.getAccountBalance(userAddress)
-          // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
-        })
-        .then(function(result) {
-          console.log(`User: ${userAddress} - UserVault: ${result.toString()}`)
-          self.setState({
-            vaultBalance: result.toString(),
-            vaultBalanceEther: web3.fromWei(result, 'ether').toString(),
-            vaultAddress: vaultInstance.address
+      console.log(vault.isDeployed())
+      if (!vault.isDeployed()) {
+        vault
+          .deployed(userAddress, userAddress, 0, 0, userAddress, 0)
+          .then(function(instance) {
+            vaultInstance = instance
+            window.vaultInstancey = vaultInstance
+            return vaultInstance.getAccountBalance(userAddress)
+            // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
           })
-          console.log(result.toString())
-        })
+          .then(function(result) {
+            console.log(`User: ${userAddress} - UserVault: ${result.toString()}`)
+            self.setState({
+              vaultBalance: result.toString(),
+              vaultBalanceEther: web3.fromWei(result, 'ether').toString(),
+              vaultAddress: vaultInstance.address
+            })
+            console.log(result.toString())
+          })
+      } else {
+        vault
+          .deployed()
+          .then(function(instance) {
+            vaultInstance = instance
+            return vaultInstance.getAccountBalance(userAddress)
+            // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
+          })
+          .then(function(result) {
+            console.log(`User: ${userAddress} - UserVault: ${result.toString()}`)
+            self.setState({
+              vaultBalance: result.toString(),
+              vaultBalanceEther: web3.fromWei(result, 'ether').toString(),
+              vaultAddress: vaultInstance.address
+            })
+            console.log(result.toString())
+          })
+      }
     })
   }
 
@@ -202,6 +223,54 @@ class Dasboard extends Component {
 
   handlePeriodChange = (event, index, value) => {
     this.setState({ selectedPeriod: value })
+  }
+
+  handleCoinSomeone = event => {
+    const vault = this.state.vault,
+      web3 = this.state.web3,
+      userAddress = this.state.userAddress,
+      userBalance = this.state.userBalance,
+      coinSomeoneValue = this.state.coinSomeoneValue,
+      coinSomeoneAddress = this.state.coinSomeoneAddress,
+      vaultBalance = this.state.vaultBalance,
+      vaultAddress = this.state.vaultAddress
+    let vaultInstance,
+      self = this
+    if (Number(coinSomeoneValue) > Number(vaultBalance)) {
+      console.log('Not enough Ether!')
+      self.setState({ openSnackbar: true, snackbarMessage: 'Error: Not enough Ether!', loadVaultValue: 0 })
+      return
+    }
+
+    vault
+      .deployed()
+      .then(function(instance) {
+        vaultInstance = instance
+        return vaultInstance.sendPayment(coinSomeoneAddress, Number(coinSomeoneValue), {
+          from: vaultAddress
+        })
+      })
+      .then(function(result) {
+        _waitForTxToBeMined(web3, result.tx)
+        console.log('Mined TX:', result.tx)
+        return vaultInstance.getAccountBalance(userAddress)
+      })
+      .then(function(result) {
+        console.log(`User: ${userAddress} - UserVault: ${result.toString()}`)
+
+        console.log('Full Vault Balance:', web3.eth.getBalance(vaultInstance.address).toString())
+        console.log('Vault Balance:', result.toString())
+        console.log('Address Balance:', web3.eth.getBalance(userAddress).toString())
+        self.setState({
+          vaultBalance: result.toString(),
+          vaultBalanceEther: web3.fromWei(result, 'ether').toString(),
+          userBalance: web3.eth.getBalance(userAddress).toString()
+        })
+        self.setState({
+          openSnackbar: true,
+          snackbarMessage: `Coined ${coinSomeoneAddress} with ${coinSomeoneValue} WEI`
+        })
+      })
   }
 
   handleTestAccountChanged = value => {
