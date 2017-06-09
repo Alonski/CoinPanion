@@ -53,9 +53,6 @@ contract Vault is Escapable {
     uint public timeLock;
     uint public maxSecurityGuardDelay;
 
-    /// @dev Dictionary that maps addresses to balances
-    mapping (address => uint) private balances;
-
     /// @dev The white list of approved addresses allowed to set up && receive
     ///  payments from this vault
     mapping (address => bool) public allowedSpenders;
@@ -126,7 +123,6 @@ contract Vault is Escapable {
         if (msg.value <= 0) {
             throw;
         }
-        balances[msg.sender] += msg.value;
         EtherReceived(msg.sender, msg.value);
     }
 
@@ -136,30 +132,9 @@ contract Vault is Escapable {
         receiveEther();
     }
 
-//////
-// Query Balance
-//////
-
-    /// @notice Get balance
-    /// @return The balance of the user
-    // 'constant' prevents function from editing state variables;
-    // allows function to run locally/off blockchain
-    function getAccountBalance() constant returns (uint) {
-        return balances[msg.sender];
-    }
-
 ////////
 // Spender Interface
 ////////
-
-    function sendPayment(address _recipient, uint _amount) returns(uint) {
-        // Skip if someone tries to withdraw 0 or if they don't have enough Ether to make the withdrawal.
-        if (balances[msg.sender] < _amount || _amount == 0)
-            return;
-        balances[msg.sender] -= _amount;
-        _recipient.transfer(_amount);
-    }
-
     /// @notice only `allowedSpenders[]` Creates a new `Payment`
     /// @param _name Brief description of the payment that is authorized
     /// @param _recipient Destination of the payment
@@ -214,12 +189,10 @@ contract Vault is Escapable {
         if (now < p.earliestPayTime) throw;
         if (p.canceled) throw;
         if (p.paid) throw;
-        if (this.balance < p.amount) throw;
+        if (this.balance < p.amount p.amount == 0) throw;
 
         p.paid = true; // Set the payment to being paid
-        if (balances[p.spender] < p.amount || p.amount == 0)
-            throw;
-        balances[p.spender] -= p.amount;
+
         p.recipient.transfer(p.amount);
 
         PaymentExecuted(_idPayment, p.recipient, p.amount);

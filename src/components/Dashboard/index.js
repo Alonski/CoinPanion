@@ -131,7 +131,7 @@ class Dasboard extends Component {
             vaultInstance.authorizeSpender(userAddress, true, { from: userAddress })
           })
           .then(function(result) {
-            return vaultInstance.getAccountBalance.call(userAddress, { from: userAddress })
+            return web3.eth.getBalance(vaultInstance.address)
             // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
           })
           .then(function(result) {
@@ -148,7 +148,7 @@ class Dasboard extends Component {
           .at(testVaultAddress)
           .then(function(instance) {
             vaultInstance = instance
-            return vaultInstance.getAccountBalance.call(userAddress, { from: userAddress })
+            return web3.eth.getBalance(vaultInstance.address)
             // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
           })
           .then(function(result) {
@@ -214,18 +214,15 @@ class Dasboard extends Component {
       .then(function(result) {
         _waitForTxToBeMined(web3, result.tx)
         console.log('Mined TX:', result.tx)
-        return vaultInstance.getAccountBalance.call(userAddress, { from: userAddress })
-      })
-      .then(function(result) {
-        console.log(`User: ${userAddress} - UserVault: ${result.toString()}`)
+        console.log(`User: ${userAddress} - UserVault: ${vaultInstance.address}`)
 
         console.log('Full Vault Balance:', web3.eth.getBalance(vaultInstance.address).toString())
-        console.log('Vault Balance:', result.toString())
         console.log('Address Balance:', web3.eth.getBalance(userAddress).toString())
         self.setState({
-          vaultBalance: result.toString(),
-          vaultBalanceEther: web3.fromWei(result, 'ether').toString(),
-          userBalance: web3.eth.getBalance(userAddress).toString()
+          vaultBalance: web3.eth.getBalance(vaultInstance.address).toString(),
+          vaultBalanceEther: web3.fromWei(web3.eth.getBalance(vaultInstance.address).toString(), 'ether').toString(),
+          userBalance: web3.eth.getBalance(userAddress).toString(),
+          userBalanceEther: web3.fromWei(web3.eth.getBalance(userAddress), 'ether').toString()
         })
         self.setState({ openSnackbar: true, snackbarMessage: `Vault loaded with ${loadVaultValue} WEI` })
       })
@@ -281,7 +278,7 @@ class Dasboard extends Component {
         console.log('Mined TX:', result.tx)
         console.log(('Result', result))
         idPayment = result.logs[0].args.idPayment.toString() // Could save
-        return vaultInstance.getAccountBalance.call(userAddress, { from: userAddress })
+        return web3.eth.getBalance(vaultInstance.address)
       })
       .then(function(result) {
         console.log(`User: ${userAddress} - UserVault: ${result.toString()}`)
@@ -333,7 +330,7 @@ class Dasboard extends Component {
         .at(testVaultAddress)
         .then(function(instance) {
           vaultInstance = instance
-          return vaultInstance.getAccountBalance(userAddress)
+          return web3.eth.getBalance(vaultInstance.address)
         })
         .then(function(result) {
           console.log(`User: ${userAddress} - UserVault: ${result.toString()}`)
