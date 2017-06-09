@@ -13,10 +13,16 @@ const Main = styled.div`
   justify-content: space-around;
 `
 
+const Container = styled.div`
+  flex-direction: column;
+  max-width: 80%;
+`
+
 class UserProfile extends Component {
   state = {
     open: false,
-    coinAmount: 0.0
+    coinAmount: 0.0,
+    imSubscribed: ''
   }
 
   handleOpen = () => {
@@ -47,27 +53,57 @@ class UserProfile extends Component {
       console.error('Invalid inputs.')
       return false
     }
-    this.props.firebase.push('coinings', {
-      coiner: this.props.myId,
-      coinee: this.props.userProfile.id,
-      eth_amount: amount
-    })
+    if (this.state.imSubscribed) {
+      // update coining
+      this.props.firebase.update(`coinings/${this.state.imSubscribed}`, { eth_amount: amount })
+    } else {
+      // add new coining
+      this.props.firebase.push('coinings', {
+        coiner: this.props.myId,
+        coinee: this.props.userProfile.id,
+        eth_amount: amount
+      })
+    }
     this.setState({ open: false })
   }
 
+  handleUnsubscribe = () => {
+    if (this.state.imSubscribed) {
+      this.props.firebase.remove(`coinings/${this.state.imSubscribed}`)
+    }
+  }
+
   calculateCoiners() {
-    let totalCoinedAmount = this.props.coinings.reduce((ethSum, coining) => ethSum + coining.eth_amount, 0)
+    const coinings = this.props.coinings || {}
+    let totalCoinedAmount = Object.values(coinings).reduce((ethSum, coining) => ethSum + coining.eth_amount, 0)
     totalCoinedAmount = Math.round(totalCoinedAmount * 10000) / 10000
-    const totalCoiners = this.props.coinings.length
+    const totalCoiners = Object.keys(coinings).length
     return `Coined by ${totalCoiners} for ${totalCoinedAmount} Eth/Month`
+  }
+
+  componentWillMount() {
+    const myCoiningKey = Object.keys(this.props.coinings).find(
+      coiningKey => this.props.coinings[coiningKey].coiner === this.props.myId
+    )
+    if (myCoiningKey) {
+      this.setState({ imSubscribed: myCoiningKey, coinAmount: this.props.coinings[myCoiningKey].eth_amount })
+    }
   }
 
   render() {
     const { userProfile } = this.props
     const actions = [
       <FlatButton label="Cancel" onTouchTap={this.handleClose} />,
-      <FlatButton label="Coin!" primary={true} keyboardFocused={true} onTouchTap={this.handleCoining} />
+      <FlatButton
+        label={this.state.imSubscribed ? 'Update Coining' : 'Coin!'}
+        primary={true}
+        keyboardFocused={true}
+        onTouchTap={this.handleCoining}
+      />
     ]
+    if (this.state.imSubscribed) {
+      actions.splice(1, 0, <FlatButton label="Unsubscribe" onTouchTap={this.handleUnsubscribe} />)
+    }
     return (
       <Card>
         <CardHeader
@@ -77,14 +113,18 @@ class UserProfile extends Component {
         />
         <CardTitle
           title={`About ${userProfile.first_name}`}
-          subtitle={`${userProfile.first_name} is creating ${userProfile.content}`}
+          subtitle={userProfile.content ? `${userProfile.first_name} is creating ${userProfile.content}` : ''}
         />
         <CardText>
           {userProfile.biography}
         </CardText>
         <CardTitle title={this.calculateCoiners()} />
         <CardActions>
-          <FlatButton label={`Coin ${userProfile.first_name}`} primary={true} onTouchTap={this.handleOpen} />
+          <FlatButton
+            label={this.state.imSubscribed ? `Update Coining` : `Coin ${userProfile.first_name}`}
+            primary={true}
+            onTouchTap={this.handleOpen}
+          />
         </CardActions>
         <Dialog
           title={`Coin ${userProfile.first_name}`}
@@ -93,7 +133,9 @@ class UserProfile extends Component {
           open={this.state.open}
           onRequestClose={this.handleClose}
         >
-          Show your support and subscribe to {userProfile.first_name}!
+          {this.state.imSubscribed
+            ? `Thanks for supporting ${userProfile.first_name}!`
+            : `Show your support and subscribe to ${userProfile.first_name}!`}
           <br />
           <TextField
             defaultValue={this.state.coinAmount}
@@ -108,14 +150,11 @@ class UserProfile extends Component {
 }
 
 class Profile extends Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      userExists: false,
-      userProfile: {},
-      coinings: [],
-      myAddress: ''
-    }
+  state = {
+    userExists: false,
+    userProfile: {},
+    coinings: {},
+    myAddress: ''
   }
 
   componentWillReceiveProps({ addresses }) {
@@ -143,6 +182,11 @@ class Profile extends Component {
     this.props.firebase.database().ref().child('users').orderByChild('id').equalTo(userId).once('value', snap => {
       if (snap.val()) {
         const userProfile = Object.values(snap.val())[0] // only 1 value should exist for an id
+        this.setState({
+          userExists: true,
+          userProfile: userProfile
+        })
+        // find associated coinings
         this.props.firebase
           .database()
           .ref()
@@ -152,11 +196,9 @@ class Profile extends Component {
           .on('value', snap => {
             let coinings
             if (snap.val()) {
-              coinings = Object.values(snap.val())
+              coinings = snap.val()
             }
             this.setState({
-              userExists: true,
-              userProfile: userProfile,
               coinings: coinings
             })
           })
@@ -168,13 +210,15 @@ class Profile extends Component {
     return (
       <Main>
         {this.state.userExists
-          ? <UserProfile
-              userProfile={this.state.userProfile}
-              coinings={this.state.coinings}
-              firebase={this.props.firebase}
-              myAddress={this.state.myAddress}
-              myId={this.state.myId}
-            />
+          ? <Container>
+              <UserProfile
+                userProfile={this.state.userProfile}
+                coinings={this.state.coinings}
+                firebase={this.props.firebase}
+                myAddress={this.state.myAddress}
+                myId={this.state.myId}
+              />
+            </Container>
           : <h1>User not found</h1>}
       </Main>
     )
