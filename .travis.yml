@@ -27,9 +27,9 @@ install:
   - npm install
 
 before_deploy:
-  - npm run build
   - truffle compile
   - truffle migrate
+  - npm run build
 
 deploy:
   provider: surge
