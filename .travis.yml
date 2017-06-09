@@ -28,7 +28,6 @@ install:
 
 before_deploy:
   - truffle compile
-  - truffle migrate
   - npm run build
 
 deploy:
