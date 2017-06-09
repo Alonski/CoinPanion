@@ -117,13 +117,13 @@ class Dasboard extends Component {
           .then(function(instance) {
             vaultInstance = instance
             window.vaultInstancey = vaultInstance
-            return vaultInstance.getAccountBalance(userAddress)
+            return vaultInstance.getAccountBalance.call(userAddress, { from: userAddress })
             // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
           })
           .then(function(result) {
             console.log(`User: ${userAddress} - UserVault: ${result.toString()}`)
             self.setState({
-              vaultBalance: result.toString(),
+              vaultBalance: result.toNumber(),
               vaultBalanceEther: web3.fromWei(result, 'ether').toString(),
               vaultAddress: vaultInstance.address
             })
@@ -134,7 +134,7 @@ class Dasboard extends Component {
           .deployed()
           .then(function(instance) {
             vaultInstance = instance
-            return vaultInstance.getAccountBalance(userAddress)
+            return vaultInstance.getAccountBalance.call(userAddress, { from: userAddress })
             // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
           })
           .then(function(result) {
@@ -200,7 +200,7 @@ class Dasboard extends Component {
       .then(function(result) {
         _waitForTxToBeMined(web3, result.tx)
         console.log('Mined TX:', result.tx)
-        return vaultInstance.getAccountBalance(userAddress)
+        return vaultInstance.getAccountBalance.call(userAddress, { from: userAddress })
       })
       .then(function(result) {
         console.log(`User: ${userAddress} - UserVault: ${result.toString()}`)
@@ -229,7 +229,7 @@ class Dasboard extends Component {
     const vault = this.state.vault,
       web3 = this.state.web3,
       userAddress = this.state.userAddress,
-      userBalance = this.state.userBalance,
+      // userBalance = this.state.userBalance,
       coinSomeoneValue = this.state.coinSomeoneValue,
       coinSomeoneAddress = this.state.coinSomeoneAddress,
       vaultBalance = this.state.vaultBalance,
@@ -247,13 +247,13 @@ class Dasboard extends Component {
       .then(function(instance) {
         vaultInstance = instance
         return vaultInstance.sendPayment(coinSomeoneAddress, Number(coinSomeoneValue), {
-          from: vaultAddress
+          from: userAddress
         })
       })
       .then(function(result) {
         _waitForTxToBeMined(web3, result.tx)
         console.log('Mined TX:', result.tx)
-        return vaultInstance.getAccountBalance(userAddress)
+        return vaultInstance.getAccountBalance.call(userAddress, { from: userAddress })
       })
       .then(function(result) {
         console.log(`User: ${userAddress} - UserVault: ${result.toString()}`)

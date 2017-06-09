@@ -150,14 +150,15 @@ contract Vault is Escapable {
 ////////
 
     function sendPayment(address _recipient, uint _amount) returns(uint) {
-        if (!_recipient.send(_amount)) {  // Make the payment
-            throw;
-        }
+        // Skip if someone tries to withdraw 0 or if they don't have enough Ether to make the withdrawal.
+        if (balances[msg.sender] < _amount || _amount == 0)
+            return;
+        balances[msg.sender] -= _amount;
+        _recipient.transfer(_amount);
     }
 
     /// @notice only `allowedSpenders[]` Creates a new `Payment`
     /// @param _name Brief description of the payment that is authorized
-    /// @param _reference External reference of the payment
     /// @param _recipient Destination of the payment
     /// @param _amount Amount to be paid in wei
     /// @param _paymentDelay Number of seconds the payment is to be delayed, if
@@ -165,7 +166,6 @@ contract Vault is Escapable {
     /// @return The Payment ID number for the new authorized payment
     function authorizePayment(
         string _name,
-        bytes32 _reference,
         address _recipient,
         uint _amount,
         uint _paymentDelay
@@ -190,7 +190,6 @@ contract Vault is Escapable {
         p.recipient = _recipient;
         p.amount = _amount;
         p.name = _name;
-        p.reference = _reference;
         PaymentAuthorized(idPayment, p.recipient, p.amount);
         return idPayment;
     }
