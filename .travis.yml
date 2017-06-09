@@ -19,6 +19,7 @@ before_install:
   - npm install -g node-gyp
   - npm install -g marked
   - npm install -g yarn
+  - npm install -g truffle
   # - npm install libavahi-compat-libdnssd-dev
 
 install:
@@ -27,6 +28,8 @@ install:
 
 before_deploy:
   - npm run build
+  - truffle compile
+  - truffle migrate
 
 deploy:
   provider: surge
