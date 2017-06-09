@@ -53,6 +53,9 @@ contract Vault is Escapable {
     uint public timeLock;
     uint public maxSecurityGuardDelay;
 
+    /// @dev Dictionary that maps addresses to balances
+    mapping (address => uint) private balances;
+
     /// @dev The white list of approved addresses allowed to set up && receive
     ///  payments from this vault
     mapping (address => bool) public allowedSpenders;
@@ -120,6 +123,7 @@ contract Vault is Escapable {
     /// @notice Called anytime ether is sent to the contract && creates an event
     /// to more easily track the incoming transactions
     function receiveEther() payable {
+        balances[msg.sender] += msg.value;
         EtherReceived(msg.sender, msg.value);
     }
 
@@ -127,6 +131,18 @@ contract Vault is Escapable {
     ///  contract
     function () payable {
         receiveEther();
+    }
+
+//////
+// Query Balance
+//////
+
+    /// @notice Get balance
+    /// @return The balance of the user
+    // 'constant' prevents function from editing state variables;
+    // allows function to run locally/off blockchain
+    function getAccountBalance() constant returns (uint) {
+        return balances[msg.sender];
     }
 
 ////////

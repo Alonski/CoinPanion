@@ -10,8 +10,10 @@ import Paper from 'material-ui/Paper'
 import Divider from 'material-ui/Divider'
 import AccountIcon from 'material-ui/svg-icons/action/account-balance'
 import WalletIcon from 'material-ui/svg-icons/action/account-balance-wallet'
+import SelectField from 'material-ui/SelectField'
+import MenuItem from 'material-ui/MenuItem'
 
-import CoinedByList from './CoinedByList'
+import CoinedList from './CoinedList'
 
 import VaultContract from '../../../build/contracts/Vault.json'
 import Conf from '../../../truffle.js'
@@ -37,6 +39,10 @@ const StyledPaper = styled(Paper)`
   padding-bottom: 10px;
 `
 
+const period = ['Days', 'Weeks', 'Months']
+
+const showChangeTestAccount = false
+
 class Dasboard extends Component {
   constructor(props) {
     super(props)
@@ -54,7 +60,12 @@ class Dasboard extends Component {
       snackbarMessage: '',
       pristine: true,
       first_name: '',
-      last_name: ''
+      last_name: '',
+      selectedPeriod: 'Days',
+      coinSomeoneAddress: '0x0',
+      subscriptionDelay: 0,
+      coinSomeoneValue: 0,
+      testAccount: 0
     }
   }
 
@@ -75,48 +86,46 @@ class Dasboard extends Component {
 
     const provider = new Web3.providers.HttpProvider('http://' + host + ':' + port)
     const contract = require('truffle-contract')
+    // const simpleStorage = contract(SimpleStorageContract)
+    // simpleStorage.setProvider(provider)
     const vault = contract(VaultContract)
     vault.setProvider(provider)
 
     // Get Web3 so we can get our accounts.
-    const web3RPC = new Web3(provider)
+    const web3 = new Web3(provider)
 
-    self.setState({ web3: web3RPC, vault: vault })
+    self.setState({ web3: web3, vault: vault })
 
     // Declaring this for later so we can chain functions on SimpleStorage.
     // var simpleStorageInstance
     var vaultInstance
-
+    let userAddress
     // Get accounts.
-    web3RPC.eth.getAccounts(function(error, accounts) {
+    web3.eth.getAccounts(function(error, accounts) {
       console.log(accounts)
-      self.setState({ userAddress: accounts[0], userBalance: web3RPC.eth.getBalance(accounts[0]).toString() })
-      vault.deployed().then(function(instance) {
-        vaultInstance = instance
-        self.setState({
-          vaultBalance: web3RPC.eth.getBalance(vaultInstance.address).toString(),
-          vaultBalanceEther: web3RPC.fromWei(web3RPC.eth.getBalance(vaultInstance.address).toString(), 'ether'),
-          vaultAddress: vaultInstance.address
-        })
-        // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
+      userAddress = accounts[self.state.testAccount]
+      self.setState({
+        userAddress: userAddress,
+        userBalance: web3.eth.getBalance(userAddress).toString()
       })
-      // .then(function(result) {
-      //   console.log(result.toString())
-      // })
 
-      // vault
-      //   .deployed()
-      //   .then(function(instance) {
-      //     console.log(instance)
-      //     vaultInstance = instance
-      //     return vaultInstance.receiveEther({ from: accounts[0], value: 5000 })
-      //   })
-      //   .then(function(result) {
-      //     _waitForTxToBeMined(web3RPC, result.tx)
-      //     console.log('Mined TX:', result.tx)
-      //     console.log('Contract Balance:', web3RPC.eth.getBalance(vaultInstance.address).toString())
-      //     console.log('Address Balance:', web3RPC.eth.getBalance(accounts[0]).toString())
-      //   })
+      vault
+        .deployed()
+        .then(function(instance) {
+          vaultInstance = instance
+          window.vaulty = vaultInstance
+          return vaultInstance.getAccountBalance(userAddress)
+          // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
+        })
+        .then(function(result) {
+          console.log(`User: ${userAddress} - UserVault: ${result.toString()}`)
+          self.setState({
+            vaultBalance: result.toString(),
+            vaultBalanceEther: web3.fromWei(result, 'ether').toString(),
+            vaultAddress: vaultInstance.address
+          })
+          console.log(result.toString())
+        })
     })
   }
 
@@ -156,7 +165,7 @@ class Dasboard extends Component {
       loadVaultValue = this.state.loadVaultValue
     let vaultInstance,
       self = this
-    if (loadVaultValue > userBalance) {
+    if (Number(loadVaultValue) > Number(userBalance)) {
       console.log('Not enough Ether!')
       self.setState({ openSnackbar: true, snackbarMessage: 'Error: Not enough Ether!', loadVaultValue: 0 })
       return
@@ -170,11 +179,17 @@ class Dasboard extends Component {
       .then(function(result) {
         _waitForTxToBeMined(web3, result.tx)
         console.log('Mined TX:', result.tx)
-        console.log('Contract Balance:', web3.eth.getBalance(vaultInstance.address).toString())
+        return vaultInstance.getAccountBalance(userAddress)
+      })
+      .then(function(result) {
+        console.log(`User: ${userAddress} - UserVault: ${result.toString()}`)
+
+        console.log('Full Vault Balance:', web3.eth.getBalance(vaultInstance.address).toString())
+        console.log('Vault Balance:', result.toString())
         console.log('Address Balance:', web3.eth.getBalance(userAddress).toString())
         self.setState({
-          vaultBalance: web3.eth.getBalance(vaultInstance.address).toString(),
-          vaultBalanceEther: web3.fromWei(web3.eth.getBalance(vaultInstance.address).toString(), 'ether'),
+          vaultBalance: result.toString(),
+          vaultBalanceEther: web3.fromWei(result, 'ether').toString(),
           userBalance: web3.eth.getBalance(userAddress).toString()
         })
         self.setState({ openSnackbar: true, snackbarMessage: `Vault loaded with ${loadVaultValue} WEI` })
@@ -183,6 +198,59 @@ class Dasboard extends Component {
 
   handleRequestClose = event => {
     this.setState({ openSnackbar: false })
+  }
+
+  handlePeriodChange = (event, index, value) => {
+    this.setState({ selectedPeriod: value })
+  }
+
+  handleTestAccountChanged = value => {
+    var self = this
+
+    // Get the RPC provider and setup our SimpleStorage contract.
+    var { host, port } = Conf.networks[process.env.NODE_ENV]
+
+    const provider = new Web3.providers.HttpProvider('http://' + host + ':' + port)
+    const contract = require('truffle-contract')
+    // const simpleStorage = contract(SimpleStorageContract)
+    // simpleStorage.setProvider(provider)
+    const vault = contract(VaultContract)
+    vault.setProvider(provider)
+
+    // Get Web3 so we can get our accounts.
+    const web3 = new Web3(provider)
+
+    self.setState({ web3: web3, vault: vault })
+
+    let vaultInstance, userAddress, userBalance
+
+    this.setState({ testAccount: value })
+
+    web3.eth.getAccounts(function(error, accounts) {
+      userAddress = accounts[self.state.testAccount]
+      userBalance = web3.eth.getBalance(userAddress).toString()
+      console.log(userAddress)
+      self.setState({ userAddress: userAddress, userBalance: userBalance })
+      vault
+        .deployed()
+        .then(function(instance) {
+          vaultInstance = instance
+          return vaultInstance.getAccountBalance(userAddress)
+        })
+        .then(function(result) {
+          console.log(`User: ${userAddress} - UserVault: ${result.toString()}`)
+
+          console.log('Full Vault Balance:', web3.eth.getBalance(vaultInstance.address).toString())
+          console.log('Vault Balance:', result.toString())
+          console.log('Address Balance:', web3.eth.getBalance(userAddress).toString())
+          self.setState({
+            vaultBalance: result.toString(),
+            vaultBalanceEther: web3.fromWei(result, 'ether').toString(),
+            userBalance: web3.eth.getBalance(userAddress).toString()
+          })
+          self.setState({ openSnackbar: true, snackbarMessage: `Test Account Changed to: ${value}` })
+        })
+    })
   }
 
   render() {
@@ -203,6 +271,22 @@ class Dasboard extends Component {
         <Main>
           <h1>Dashboard</h1>
         </Main>
+        {showChangeTestAccount
+          ? <Paper>
+              <InnerContainer>
+                <span>Change Test Account</span>
+                <TextField
+                  floatingLabelText="Account Number"
+                  type="number"
+                  onChange={(event, newValue) => this.handleTestAccountChanged(newValue)}
+                  errorText={
+                    this.state.testAccount < 0 || this.state.testAccount > 10 ? 'Incorrect Test Account' : null
+                  }
+                  value={this.state.testAccount || 0}
+                />
+              </InnerContainer>
+            </Paper>
+          : <span />}
         <Main>
           <StyledPaper>
             <InnerContainer>
@@ -248,7 +332,60 @@ class Dasboard extends Component {
         <Main>
           <StyledPaper>
             <InnerContainer>
-              <CoinedByList photo_url="http://lorempixel.com/400/200/" />
+              <span>Coin Someone</span>
+              <TextField
+                floatingLabelText="Amount to Send in WEI"
+                type="number"
+                onChange={(event, newValue) => this.handleFieldChange('coinSomeoneValue', event, newValue)}
+                errorText={!this.state.coinSomeoneValue ? 'Value is Required' : null}
+                value={this.state.coinSomeoneValue || ''}
+              />
+              <TextField
+                floatingLabelText="Address to Subscribe to"
+                type="text"
+                onChange={(event, newValue) => this.handleFieldChange('coinSomeoneAddress', event, newValue)}
+                errorText={
+                  !this.state.coinSomeoneAddress || this.state.coinSomeoneAddress === '0x0'
+                    ? 'Address is Required'
+                    : null
+                }
+                value={this.state.coinSomeoneAddress || ''}
+              />
+              <TextField
+                floatingLabelText={`Send every ${this.state.subscriptionDelay} ${this.state.selectedPeriod}`}
+                type="number"
+                onChange={(event, newValue) => this.handleFieldChange('subscriptionDelay', event, newValue)}
+                errorText={!this.state.subscriptionDelay ? 'Value is Required' : null}
+                value={this.state.subscriptionDelay || ''}
+              />
+              <SelectField
+                floatingLabelText="Period"
+                value={this.state.selectedPeriod}
+                onChange={this.handlePeriodChange}
+                maxHeight={200}
+              >
+                {period.map((period, index) => <MenuItem key={index} value={period} primaryText={period} />)}
+              </SelectField>
+              <RaisedButton label="Coin Someone" primary={true} onTouchTap={this.handleCoinSomeone} />
+              <Snackbar
+                open={this.state.openSnackbar}
+                message={this.state.snackbarMessage}
+                autoHideDuration={4000}
+                onRequestClose={this.handleRequestClose}
+              />
+            </InnerContainer>
+          </StyledPaper>
+        </Main>
+
+        <Main>
+          <StyledPaper>
+            <InnerContainer>
+              <CoinedList title="Coined By: 4 CoinPanions" photo_url="http://lorempixel.com/400/200/" />
+            </InnerContainer>
+          </StyledPaper>
+          <StyledPaper>
+            <InnerContainer>
+              <CoinedList title="You Coined: 4 CoinPanions" photo_url="http://lorempixel.com/400/200/" />
             </InnerContainer>
           </StyledPaper>
         </Main>

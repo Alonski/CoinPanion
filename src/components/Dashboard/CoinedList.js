@@ -23,10 +23,10 @@ const rightIconMenu = (
   </IconMenu>
 )
 
-const CoinedByList = props =>
+const CoinedList = props =>
   <div>
     <List>
-      <Subheader>Coined By</Subheader>
+      <Subheader>{props.title}</Subheader>
       <ListItem
         leftAvatar={<Avatar src={props.photo_url} />}
         rightIconButton={rightIconMenu}
@@ -82,4 +82,4 @@ const CoinedByList = props =>
     </List>
   </div>
 
-export default CoinedByList
+export default CoinedList
