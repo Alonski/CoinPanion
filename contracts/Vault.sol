@@ -123,6 +123,9 @@ contract Vault is Escapable {
     /// @notice Called anytime ether is sent to the contract && creates an event
     /// to more easily track the incoming transactions
     function receiveEther() payable {
+        if (msg.value <= 0) {
+            throw;
+        }
         balances[msg.sender] += msg.value;
         EtherReceived(msg.sender, msg.value);
     }
@@ -214,9 +217,11 @@ contract Vault is Escapable {
         if (this.balance < p.amount) throw;
 
         p.paid = true; // Set the payment to being paid
-        if (!p.recipient.send(p.amount)) {  // Make the payment
+        if (balances[p.spender] < p.amount || p.amount == 0)
             throw;
-        }
+        balances[p.spender] -= p.amount;
+        p.recipient.transfer(p.amount);
+
         PaymentExecuted(_idPayment, p.recipient, p.amount);
      }
 

@@ -43,6 +43,12 @@ const period = ['Days', 'Weeks', 'Months']
 
 const showChangeTestAccount = false
 
+// This needs to be saved into the DB for each user.
+// If a user does not have a VaultAddress then it needs to be created by the user
+// Should this be a button to create Vault or just Create Vault when the page loads?
+// Creating a vault like this: Vault.deployed(userAddress, userAddress, 0, 0, userAddress, 0)
+const testVaultAddress = '0x4332c691b7c74ef25481a613c4117207fe546eea'
+
 class Dasboard extends Component {
   constructor(props) {
     super(props)
@@ -52,6 +58,7 @@ class Dasboard extends Component {
       loadVaultValue: 0,
       vaultAddress: '0x0',
       userBalance: 0,
+      userBalanceEther: 0,
       userAddress: '0x0',
       photo_url: null,
       web3: '',
@@ -96,6 +103,8 @@ class Dasboard extends Component {
     // Get Web3 so we can get our accounts.
     const web3 = new Web3(provider)
 
+    window.weby = web3
+
     self.setState({ web3: web3, vault: vault })
 
     // Declaring this for later so we can chain functions on SimpleStorage.
@@ -108,15 +117,20 @@ class Dasboard extends Component {
       userAddress = accounts[self.state.testAccount]
       self.setState({
         userAddress: userAddress,
-        userBalance: web3.eth.getBalance(userAddress).toString()
+        userBalance: web3.eth.getBalance(userAddress).toString(),
+        userBalanceEther: web3.fromWei(web3.eth.getBalance(userAddress), 'ether').toString()
       })
       console.log(vault.isDeployed())
       if (!vault.isDeployed()) {
         vault
-          .deployed(userAddress, userAddress, 0, 0, userAddress, 0)
+          .at(testVaultAddress)
+          // .deployed(userAddress, userAddress, 0, 0, userAddress, 0)
           .then(function(instance) {
             vaultInstance = instance
             window.vaultInstancey = vaultInstance
+            vaultInstance.authorizeSpender(userAddress, true, { from: userAddress })
+          })
+          .then(function(result) {
             return vaultInstance.getAccountBalance.call(userAddress, { from: userAddress })
             // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
           })
@@ -131,7 +145,7 @@ class Dasboard extends Component {
           })
       } else {
         vault
-          .deployed()
+          .at(testVaultAddress)
           .then(function(instance) {
             vaultInstance = instance
             return vaultInstance.getAccountBalance.call(userAddress, { from: userAddress })
@@ -192,7 +206,7 @@ class Dasboard extends Component {
       return
     }
     vault
-      .deployed()
+      .at(testVaultAddress)
       .then(function(instance) {
         vaultInstance = instance
         return vaultInstance.receiveEther({ from: userAddress, value: loadVaultValue })
@@ -233,9 +247,11 @@ class Dasboard extends Component {
       coinSomeoneValue = this.state.coinSomeoneValue,
       coinSomeoneAddress = this.state.coinSomeoneAddress,
       vaultBalance = this.state.vaultBalance,
-      vaultAddress = this.state.vaultAddress
+      vaultAddress = this.state.vaultAddress,
+      subscriptionDelay = this.state.subscriptionDelay
     let vaultInstance,
-      self = this
+      self = this,
+      idPayment
     if (Number(coinSomeoneValue) > Number(vaultBalance)) {
       console.log('Not enough Ether!')
       self.setState({ openSnackbar: true, snackbarMessage: 'Error: Not enough Ether!', loadVaultValue: 0 })
@@ -243,16 +259,28 @@ class Dasboard extends Component {
     }
 
     vault
-      .deployed()
+      .at(testVaultAddress)
       .then(function(instance) {
         vaultInstance = instance
-        return vaultInstance.sendPayment(coinSomeoneAddress, Number(coinSomeoneValue), {
-          from: userAddress
-        })
+        return vaultInstance.authorizePayment(
+          'alon',
+          coinSomeoneAddress,
+          Number(coinSomeoneValue),
+          Number(subscriptionDelay),
+          {
+            from: userAddress,
+            gas: 500000
+          }
+        )
+        //   return vaultInstance.sendPayment(coinSomeoneAddress, Number(coinSomeoneValue), {
+        //     from: userAddress
+        //   })
       })
       .then(function(result) {
         _waitForTxToBeMined(web3, result.tx)
         console.log('Mined TX:', result.tx)
+        console.log(('Result', result))
+        idPayment = result.logs[0].args.idPayment.toString() // Could save
         return vaultInstance.getAccountBalance.call(userAddress, { from: userAddress })
       })
       .then(function(result) {
@@ -264,11 +292,12 @@ class Dasboard extends Component {
         self.setState({
           vaultBalance: result.toString(),
           vaultBalanceEther: web3.fromWei(result, 'ether').toString(),
-          userBalance: web3.eth.getBalance(userAddress).toString()
+          userBalance: web3.eth.getBalance(userAddress).toString(),
+          userBalanceEther: web3.fromWei(web3.eth.getBalance(userAddress), 'ether').toString()
         })
         self.setState({
           openSnackbar: true,
-          snackbarMessage: `Coined ${coinSomeoneAddress} with ${coinSomeoneValue} WEI`
+          snackbarMessage: `ID: ${idPayment} Coined ${coinSomeoneAddress} with ${coinSomeoneValue} WEI`
         })
       })
   }
@@ -301,7 +330,7 @@ class Dasboard extends Component {
       console.log(userAddress)
       self.setState({ userAddress: userAddress, userBalance: userBalance })
       vault
-        .deployed()
+        .at(testVaultAddress)
         .then(function(instance) {
           vaultInstance = instance
           return vaultInstance.getAccountBalance(userAddress)
@@ -326,7 +355,7 @@ class Dasboard extends Component {
     const {
       photo_url,
       userAddress,
-      userBalance,
+      userBalanceEther,
       vaultAddress,
       vaultBalanceEther,
       loadVaultValue,
@@ -369,7 +398,7 @@ class Dasboard extends Component {
                   primaryText={userAddress}
                   leftIcon={<AccountIcon />}
                 />
-                <ListItem secondaryText="Your balance" primaryText={userBalance} leftIcon={<WalletIcon />} />
+                <ListItem secondaryText="Your balance" primaryText={userBalanceEther} leftIcon={<WalletIcon />} />
               </List>
               <Divider inset={true} />
               <List>
