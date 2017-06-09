@@ -157,7 +157,10 @@ class Profile extends Component {
     myAddress: ''
   }
 
-  componentWillReceiveProps({ addresses }) {
+  componentWillReceiveProps(nextProps) {
+    console.log(nextProps)
+    const { addresses } = nextProps
+    this.getUser(nextProps.match.params.id)
     if (addresses && addresses[0]) {
       this.setState({ myAddress: addresses[0] })
       this.props.firebase
@@ -178,8 +181,11 @@ class Profile extends Component {
   }
 
   componentWillMount() {
-    const userId = this.props.match.params.id
-    this.props.firebase.database().ref().child('users').orderByChild('id').equalTo(userId).once('value', snap => {
+    this.getUser(this.props.match.params.id)
+  }
+
+  getUser = id => {
+    this.props.firebase.database().ref().child('users').orderByChild('id').equalTo(id).once('value', snap => {
       if (snap.val()) {
         const userProfile = Object.values(snap.val())[0] // only 1 value should exist for an id
         this.setState({
