@@ -17,6 +17,7 @@ import VaultContract from '../../../build/contracts/Vault.json'
 import Conf from '../../../truffle.js'
 import Web3 from 'web3'
 import firebase from 'firebase'
+import * as querybase from 'querybase'
 
 const Main = styled.div`
   display: flex;
@@ -54,7 +55,8 @@ class Dasboard extends Component {
       snackbarMessage: '',
       pristine: true,
       first_name: '',
-      last_name: ''
+      last_name: '',
+      coinings: []
     }
   }
 
@@ -123,23 +125,59 @@ class Dasboard extends Component {
   componentWillReceiveProps(nextProps) {
     const myAddress = nextProps.addresses[0]
     if (myAddress) {
-      firebase.database().ref().child('users').orderByChild('eth_address').equalTo(myAddress).on('value', snap => {
-        if (snap.val()) {
-          const myProfile = Object.values(snap.val())[0] // only 1 value should exist for an eth address
-          this.setState({
-            first_name: myProfile.first_name,
-            last_name: myProfile.last_name,
-            email: myProfile.email,
-            category: myProfile.category || this.state.category,
-            content: myProfile.content,
-            biography: myProfile.biography,
-            photo_url: myProfile.photo_url,
-            id: myProfile.id
-          })
-        }
-      })
+      const databaseRefUsers = firebase.database().ref().child('users')
+      const usersRef = querybase.ref(databaseRefUsers, [])
+      const databaseRefCoinings = firebase.database().ref().child('coinings')
+      const coiningsRef = querybase.ref(databaseRefCoinings, [])
+      const coinings = {}
+      // find all user's coinings and join with coiners
+      // coining = { coiner: <User object> }
+      usersRef
+        .where({ eth_address: myAddress })
+        .once('value')
+        .then(userSnap => {
+          if (userSnap && userSnap.val()) {
+            const myProfile = Object.values(userSnap.val())[0] // only 1 value should exist for an eth address
+            this.setState({
+              first_name: myProfile.first_name,
+              last_name: myProfile.last_name,
+              email: myProfile.email,
+              category: myProfile.category || this.state.category,
+              content: myProfile.content,
+              biography: myProfile.biography,
+              photo_url: myProfile.photo_url,
+              id: myProfile.id
+            })
+            return coiningsRef.where({ coinee: myProfile.id }).once('value')
+          }
+        })
+        .then(coiningsSnap => {
+          if (coiningsSnap && coiningsSnap.val()) {
+            const usersPromises = Object.values(coiningsSnap.val()).map(coining => {
+              // key by coiner to allow join
+              coinings[coining.coiner] = coining
+              return usersRef.where({ id: coining.coiner }).once('value')
+            })
+            return Promise.all(usersPromises)
+          }
+        })
+        .then(usersSnaps => {
+          if (usersSnaps) {
+            usersSnaps.forEach(snap => {
+              const [user] = Object.values(snap.val())
+              if (coinings[user.id]) {
+                coinings[user.id].coiner = user
+              }
+            })
+            this.setState({
+              coinings: Object.values(coinings)
+            })
+          }
+        })
     }
   }
+
+  componentWillMount() {}
 
   handleFieldChange = (stateKey, event, newValue) => {
     const obj = {}
@@ -248,7 +286,7 @@ class Dasboard extends Component {
         <Main>
           <StyledPaper>
             <InnerContainer>
-              <CoinedByList photo_url="http://lorempixel.com/400/200/" />
+              <CoinedByList photo_url="http://lorempixel.com/400/200/" coinings={this.state.coinings} />
             </InnerContainer>
           </StyledPaper>
         </Main>
