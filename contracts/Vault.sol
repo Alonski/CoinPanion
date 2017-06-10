@@ -189,7 +189,7 @@ contract Vault is Escapable {
         if (now < p.earliestPayTime) throw;
         if (p.canceled) throw;
         if (p.paid) throw;
-        if (this.balance < p.amount p.amount == 0) throw;
+        if (this.balance < p.amount || p.amount == 0) throw;
 
         p.paid = true; // Set the payment to being paid
 
