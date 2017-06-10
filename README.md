@@ -5,6 +5,7 @@ CoinPanion users will have rich profiles which will tell potential coiners about
 
 # Forward
 This project was started as a submission to the Status.IM Hackathon.
+https://github.com/status-im/hackathon/issues/20
 
 # How it works
 
@@ -42,12 +43,6 @@ When a CoinVault is empty it stops sending out coins until it is replenished.
 Rahul gets an email that he has a new CoinPanion!
 He visits his CoinPanion Dashboard and sees his new subscriber Alon.
 
-# File Structure
-Src - contains the front-end's source code 
-Config - configuration and install scripts 
-The rest of the folders connect us to the Ethereum universe via
-Web3 with Truffle through the Status.Im platform
-
 # Getting up and running instructions
 1. Clone this repo
 2. Run TestRPC local node or similar.
@@ -77,5 +72,28 @@ Web3 with Truffle through the Status.Im platform
 * WebPack
 * Blockchain - TestRPC or Ropsten
 
+# File Structure
+* Src - contains the front-end's source code 
+* Config - configuration and install scripts 
+* The rest of the folders connect us to the Ethereum universe via
+* Web3 with Truffle through the Status.Im platform
+
 # Contact Us
 Join us on the Status.IM Slack channel to chat with us!
+
+## Team Members:
+### Alon
+* Github Handle: @Alonski
+* Slack Username: @alon
+
+### Rahul
+* Github Handle: @rhlsthrm
+* Slack Username: @rahul
+
+### Tim
+* Github Handle: @imbaniac
+* Slack Username: @treznich
+
+### Joseph
+* Github Handle: @Josephrp
+* Slack Username: @JosephP
