@@ -6,6 +6,9 @@ import { Card, CardActions, CardHeader, CardTitle, CardText } from 'material-ui/
 import Dialog from 'material-ui/Dialog'
 import FlatButton from 'material-ui/FlatButton'
 import TextField from 'material-ui/TextField'
+import VaultContract from '../../../build/contracts/Vault.json'
+import Web3 from 'web3'
+import Conf from '../../../truffle.js'
 
 const Main = styled.div`
   display: flex;
@@ -47,27 +50,75 @@ class UserProfile extends Component {
   }
 
   handleCoining = () => {
-    // PLACEHOLDER FOR LINKING TO CONTRACT FUNCTION
     const amount = parseFloat(this.state.coinAmount)
-    if (amount <= 0 || !this.props.myAddress || !this.props.userProfile.eth_address) {
+    if (amount <= 0 || !this.props.myProfile.eth_address || !this.props.userProfile.eth_address) {
       console.error(
-        `Invalid inputs: this.props.myAddress=${this.props.myAddress}, this.props.userProfile.eth_address=${this.props
-          .userProfile.eth_address}`
+        `Invalid inputs: this.props.myProfile.eth_address=${this.props.myProfile
+          .eth_address}, this.props.userProfile.eth_address=${this.props.userProfile.eth_address}`
       )
       return false
     }
-    if (this.state.imSubscribed) {
-      // update coining
-      this.props.firebase.update(`coinings/${this.state.imSubscribed}`, { eth_amount: amount })
-    } else {
-      // add new coining
-      this.props.firebase.push('coinings', {
-        coiner: this.props.myId,
-        coinee: this.props.userProfile.id,
-        eth_amount: amount
-      })
+
+    if (this.props.myProfile.vault_address) {
+      const { myProfile, userProfile } = this.props
+
+      var { host, port } = Conf.networks[process.env.NODE_ENV]
+      const provider = new Web3.providers.HttpProvider('http://' + host + ':' + port)
+      const vaultAddress = myProfile.vault_address
+      const contract = require('truffle-contract')
+      const vault = contract(VaultContract)
+      vault.setProvider(provider)
+      const vaultInstance = vault.at(vaultAddress)
+      const subscriptionDelay = 60 * 60 * 24 * 30 // fix to every 30 days payment for now
+
+      if (this.state.imSubscribed) {
+        // update coining
+        this.props.firebase.update(`coinings/${this.state.imSubscribed}`, { eth_amount: amount })
+      } else {
+        console.log(
+          `${myProfile.first_name} ${myProfile.last_name} paid ${userProfile.first_name} ${userProfile.last_name}`,
+          null,
+          userProfile.eth_address,
+          Number(amount),
+          Number(subscriptionDelay),
+          { from: myProfile.eth_address, gas: 500000 }
+        )
+        const paymentId = vaultInstance
+          .authorizePayment(
+            `${myProfile.first_name} ${myProfile.last_name} paid ${userProfile.first_name} ${userProfile.last_name}`,
+            null,
+            userProfile.eth_address,
+            Number(amount),
+            Number(subscriptionDelay),
+            { from: myProfile.eth_address, gas: 500000 }
+          )
+          .then(result => {
+            // add new coining
+            this.props.firebase.push('coinings', {
+              payment_id: paymentId,
+              coiner_vault_address: vaultAddress,
+              coiner: myProfile.id,
+              coinee: userProfile.id,
+              eth_amount: amount,
+              payout_timestamp_ms: Date.now() + subscriptionDelay * 1000 // convert seconds to ms
+            })
+
+            // find event in logs
+            for (var i = 0; i < result.logs.length; i++) {
+              var log = result.logs[i]
+              if (log.event === 'PaymentAuthorized') {
+                // We found the event!
+                console.log(log)
+                break
+              }
+            }
+          })
+          .catch(function(err) {
+            console.error(err)
+          })
+      }
+      this.setState({ open: false })
     }
-    this.setState({ open: false })
   }
 
   handleUnsubscribe = () => {
@@ -86,7 +137,7 @@ class UserProfile extends Component {
 
   componentWillMount() {
     const myCoiningKey = Object.keys(this.props.coinings).find(
-      coiningKey => this.props.coinings[coiningKey].coiner === this.props.myId
+      coiningKey => this.props.coinings[coiningKey].coiner === this.props.myProfile.id
     )
     if (myCoiningKey) {
       this.setState({ imSubscribed: myCoiningKey, coinAmount: this.props.coinings[myCoiningKey].eth_amount })
@@ -157,11 +208,11 @@ class Profile extends Component {
     userExists: false,
     userProfile: {},
     coinings: {},
+    myProfile: {},
     myAddress: ''
   }
 
   componentWillReceiveProps(nextProps) {
-    console.log(nextProps)
     const { addresses } = nextProps
     this.getUser(nextProps.match.params.id)
     if (addresses && addresses[0]) {
@@ -176,7 +227,7 @@ class Profile extends Component {
           if (snap.val()) {
             const myProfile = Object.values(snap.val())[0] // only 1 value should exist for an eth address
             this.setState({
-              myId: myProfile.id
+              myProfile: myProfile
             })
           }
         })
@@ -224,8 +275,7 @@ class Profile extends Component {
                 userProfile={this.state.userProfile}
                 coinings={this.state.coinings}
                 firebase={this.props.firebase}
-                myAddress={this.state.myAddress}
-                myId={this.state.myId}
+                myProfile={this.state.myProfile}
               />
             </Container>
           : <h1>User not found</h1>}
