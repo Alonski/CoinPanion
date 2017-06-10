@@ -56,7 +56,8 @@ class Dasboard extends Component {
       pristine: true,
       first_name: '',
       last_name: '',
-      coinings: []
+      coinedBy: [],
+      coinedByMe: []
     }
   }
 
@@ -129,7 +130,8 @@ class Dasboard extends Component {
       const usersRef = querybase.ref(databaseRefUsers, [])
       const databaseRefCoinings = firebase.database().ref().child('coinings')
       const coiningsRef = querybase.ref(databaseRefCoinings, [])
-      const coinings = {}
+      const coineeIsMe = {}
+      const coinerIsMe = {}
       // find all user's coinings and join with coiners
       // coining = { coiner: <User object> }
       usersRef
@@ -148,29 +150,51 @@ class Dasboard extends Component {
               photo_url: myProfile.photo_url,
               id: myProfile.id
             })
-            return coiningsRef.where({ coinee: myProfile.id }).once('value')
+            const coineeIsMe = coiningsRef.where({ coinee: myProfile.id }).once('value')
+            const coinerIsMe = coiningsRef.where({ coiner: myProfile.id }).once('value')
+            return Promise.all([coineeIsMe, coinerIsMe])
           }
         })
-        .then(coiningsSnap => {
-          if (coiningsSnap && coiningsSnap.val()) {
-            const usersPromises = Object.values(coiningsSnap.val()).map(coining => {
+        .then(([coineeIsMeSnap, coinerIsMeSnap]) => {
+          if (coineeIsMeSnap && coineeIsMeSnap.val()) {
+            const usersPromises = Object.values(coineeIsMeSnap.val()).map(coining => {
               // key by coiner to allow join
-              coinings[coining.coiner] = coining
+              coineeIsMe[coining.coiner] = coining
               return usersRef.where({ id: coining.coiner }).once('value')
             })
-            return Promise.all(usersPromises)
-          }
-        })
-        .then(usersSnaps => {
-          if (usersSnaps) {
-            usersSnaps.forEach(snap => {
-              const [user] = Object.values(snap.val())
-              if (coinings[user.id]) {
-                coinings[user.id].coiner = user
+            Promise.all(usersPromises).then(usersSnaps => {
+              if (usersSnaps) {
+                usersSnaps.forEach(snap => {
+                  const [user] = Object.values(snap.val())
+                  if (coineeIsMe[user.id]) {
+                    coineeIsMe[user.id].coiner = user
+                  }
+                })
+                this.setState({
+                  coinedBy: Object.values(coineeIsMe)
+                })
               }
             })
-            this.setState({
-              coinings: Object.values(coinings)
+          }
+
+          if (coinerIsMeSnap && coinerIsMeSnap.val()) {
+            const usersPromises = Object.values(coinerIsMeSnap.val()).map(coining => {
+              // key by coinee to allow join
+              coinerIsMe[coining.coinee] = coining
+              return usersRef.where({ id: coining.coinee }).once('value')
+            })
+            Promise.all(usersPromises).then(usersSnaps => {
+              if (usersSnaps) {
+                usersSnaps.forEach(snap => {
+                  const [user] = Object.values(snap.val())
+                  if (coinerIsMe[user.id]) {
+                    coinerIsMe[user.id].coinee = user
+                  }
+                })
+                this.setState({
+                  coinedByMe: Object.values(coinerIsMe)
+                })
+              }
             })
           }
         })
@@ -286,7 +310,7 @@ class Dasboard extends Component {
         <Main>
           <StyledPaper>
             <InnerContainer>
-              <CoinedByList photo_url="http://lorempixel.com/400/200/" coinings={this.state.coinings} />
+              <CoinedByList coinedBy={this.state.coinedBy} coinedByMe={this.state.coinedByMe} />
             </InnerContainer>
           </StyledPaper>
         </Main>
