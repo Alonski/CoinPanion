@@ -47,7 +47,7 @@ const showChangeTestAccount = false
 // If a user does not have a VaultAddress then it needs to be created by the user
 // Should this be a button to create Vault or just Create Vault when the page loads?
 // Creating a vault like this: Vault.deployed(userAddress, userAddress, 0, 0, userAddress, 0)
-const testVaultAddress = '0x55553c198d65fbff3b5cad1b71ada0b291eaf7af'
+const testVaultAddress = '0xbd7c88eda10ba981fdce018f98fa714901ec9cad'
 
 class Dasboard extends Component {
   constructor(props) {
@@ -77,24 +77,35 @@ class Dasboard extends Component {
   }
 
   componentDidMount() {
-    let web3, provider
-    // Get Web3 so we can get our accounts.
-    if (typeof window.web3 !== 'undefined' && false) {
-      // You have a web3 browser! Continue below!
-      console.log('We have web3')
-      web3 = window.web3
-      provider = web3.currentProvider
-    } else {
-      console.log('Aww no web3')
-      // Get the RPC provider.
-      var { host, port } = Conf.networks[process.env.NODE_ENV]
+    const { web3 } = this.props
+    this.initDapp(web3)
+  }
 
-      provider = new Web3.providers.HttpProvider('http://' + host + ':' + port)
-      web3 = new Web3(provider)
-
-      // Use local web3
+  componentWillReceiveProps(nextProps) {
+    const { web3 } = nextProps
+    this.initDapp(web3)
+    const myAddress = nextProps.addresses[0]
+    if (myAddress) {
+      firebase.database().ref().child('users').orderByChild('eth_address').equalTo(myAddress).on('value', snap => {
+        if (snap.val()) {
+          const myProfile = Object.values(snap.val())[0] // only 1 value should exist for an eth address
+          this.setState({
+            first_name: myProfile.first_name,
+            last_name: myProfile.last_name,
+            email: myProfile.email,
+            category: myProfile.category || this.state.category,
+            content: myProfile.content,
+            biography: myProfile.biography,
+            photo_url: myProfile.photo_url,
+            id: myProfile.id
+          })
+        }
+      })
     }
+  }
 
+  initDapp = web3 => {
+    const provider = web3.currentProvider
     web3.version.getNetwork((err, netId) => {
       switch (netId) {
         case '1':
@@ -187,27 +198,6 @@ class Dasboard extends Component {
     })
   }
 
-  componentWillReceiveProps(nextProps) {
-    const myAddress = nextProps.addresses[0]
-    if (myAddress) {
-      firebase.database().ref().child('users').orderByChild('eth_address').equalTo(myAddress).on('value', snap => {
-        if (snap.val()) {
-          const myProfile = Object.values(snap.val())[0] // only 1 value should exist for an eth address
-          this.setState({
-            first_name: myProfile.first_name,
-            last_name: myProfile.last_name,
-            email: myProfile.email,
-            category: myProfile.category || this.state.category,
-            content: myProfile.content,
-            biography: myProfile.biography,
-            photo_url: myProfile.photo_url,
-            id: myProfile.id
-          })
-        }
-      })
-    }
-  }
-
   handleFieldChange = (stateKey, event, newValue) => {
     const obj = {}
     obj[stateKey] = newValue // so key can be programatically assigned
@@ -277,7 +267,6 @@ class Dasboard extends Component {
       self.setState({ openSnackbar: true, snackbarMessage: 'Error: Not enough Ether!', loadVaultValue: 0 })
       return
     }
-
     vault
       .at(testVaultAddress)
       .then(function(instance) {

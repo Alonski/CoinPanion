@@ -12,6 +12,7 @@ import Profile from 'containers/ProfileWrapper'
 import NoMatch from 'components/NoMatch'
 
 import * as profileActions from '../actions/profile'
+import * as web3Actions from '../actions/web3'
 
 import '../css/oswald.css'
 import '../css/open-sans.css'
@@ -21,6 +22,7 @@ import './App.css'
 class App extends Component {
   componentDidMount() {
     this.props.getAddresses()
+    this.props.web3Initialize()
   }
 
   render() {
@@ -48,7 +50,7 @@ function mapStateToProps(state) {
 }
 
 function mapDispatchToProps(dispatch) {
-  return bindActionCreators({ ...profileActions }, dispatch)
+  return bindActionCreators({ ...profileActions, ...web3Actions }, dispatch)
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(App)
