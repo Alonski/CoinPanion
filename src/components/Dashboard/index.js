@@ -76,7 +76,46 @@ class Dasboard extends Component {
     }
   }
 
+  _appLoaded() {
+    console.log('App Loaded?')
+  }
+
   componentDidMount() {
+    let web3, provider
+    // Get Web3 so we can get our accounts.
+    if (typeof window.web3 !== 'undefined') {
+      // You have a web3 browser! Continue below!
+      console.log('We have web3')
+      web3 = window.web3
+      provider = web3.currentProvider
+    } else {
+      console.log('Aww no web3')
+      // Get the RPC provider.
+      var { host, port } = Conf.networks[process.env.NODE_ENV]
+
+      provider = new Web3.providers.HttpProvider('http://' + host + ':' + port)
+      web3 = new Web3(provider)
+
+      // Use local web3
+    }
+
+    web3.version.getNetwork((err, netId) => {
+      switch (netId) {
+        case '1':
+          console.log('This is mainnet')
+          break
+        case '2':
+          console.log('This is the deprecated Morden test network.')
+          break
+        case '3':
+          console.log('This is the ropsten test network.')
+          break
+        default:
+          console.log('This is an unknown network.')
+      }
+    })
+
+    const contract = require('truffle-contract')
     /*
      * SMART CONTRACT EXAMPLE
      *
@@ -85,23 +124,12 @@ class Dasboard extends Component {
      */
 
     // So we can update state later.
-
     var self = this
 
-    // Get the RPC provider and setup our SimpleStorage contract.
-    var { host, port } = Conf.networks[process.env.NODE_ENV]
-
-    const provider = new Web3.providers.HttpProvider('http://' + host + ':' + port)
-    const contract = require('truffle-contract')
     const vault = contract(VaultContract)
     vault.setProvider(provider)
 
     window.vaulty = vault
-
-    // Get Web3 so we can get our accounts.
-    const web3 = new Web3(provider)
-
-    window.weby = web3
 
     self.setState({ web3: web3, vault: vault })
 
