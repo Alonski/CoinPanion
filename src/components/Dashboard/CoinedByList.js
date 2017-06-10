@@ -44,7 +44,7 @@ export default class ListExampleNested extends React.Component {
       <div>
         <List style={{ minWidth: 250 }}>
           <ListItem
-            primaryText="Coined Me"
+            primaryText={`Coined by ${this.props.coinedBy.length} People`}
             initiallyOpen={false}
             primaryTogglesNestedList={true}
             nestedItems={this.props.coinedBy.map((coining, index) =>
@@ -67,7 +67,7 @@ export default class ListExampleNested extends React.Component {
             )}
           />
           <ListItem
-            primaryText="I've Coined"
+            primaryText={`Coined ${this.props.coinedByMe.length} People`}
             initiallyOpen={false}
             primaryTogglesNestedList={true}
             nestedItems={this.props.coinedByMe.map((coining, index) =>
