@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import styled from 'styled-components'
+import PropTypes from 'prop-types'
 
 import { List, ListItem } from 'material-ui/List'
 import Avatar from 'material-ui/Avatar'
@@ -191,7 +192,7 @@ class Dasboard extends Component {
             })
           }
         } else {
-          this.context.router.history.push(`/profile/editprofile`)
+          self.context.router.history.push('/editprofile')
         }
       })
       // .then(function(result) {
@@ -332,6 +333,10 @@ class Dasboard extends Component {
       </div>
     )
   }
+}
+
+Dasboard.contextTypes = {
+  router: PropTypes.any
 }
 
 export default Dasboard
