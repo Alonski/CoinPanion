@@ -93,8 +93,6 @@ class Dasboard extends Component {
 
     const provider = new Web3.providers.HttpProvider('http://' + host + ':' + port)
     const contract = require('truffle-contract')
-    // const simpleStorage = contract(SimpleStorageContract)
-    // simpleStorage.setProvider(provider)
     const vault = contract(VaultContract)
     vault.setProvider(provider)
 
@@ -107,8 +105,7 @@ class Dasboard extends Component {
 
     self.setState({ web3: web3, vault: vault })
 
-    // Declaring this for later so we can chain functions on SimpleStorage.
-    // var simpleStorageInstance
+    // Declaring this for later so we can chain functions on vaultInstance.
     var vaultInstance
     let userAddress
     // Get accounts.
