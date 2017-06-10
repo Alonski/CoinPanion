@@ -50,7 +50,10 @@ class UserProfile extends Component {
     // PLACEHOLDER FOR LINKING TO CONTRACT FUNCTION
     const amount = parseFloat(this.state.coinAmount)
     if (amount <= 0 || !this.props.myAddress || !this.props.userProfile.eth_address) {
-      console.error('Invalid inputs.')
+      console.error(
+        `Invalid inputs: this.props.myAddress=${this.props.myAddress}, this.props.userProfile.eth_address=${this.props
+          .userProfile.eth_address}`
+      )
       return false
     }
     if (this.state.imSubscribed) {
