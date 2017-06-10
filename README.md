@@ -43,6 +43,8 @@ When a CoinVault is empty it stops sending out coins until it is replenished.
 Rahul gets an email that he has a new CoinPanion!
 He visits his CoinPanion Dashboard and sees his new subscriber Alon.
 
+For more Use Cases look at USECASES.md
+
 # Getting up and running instructions
 1. Clone this repo
 2. Run TestRPC local node or similar.
