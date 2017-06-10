@@ -68,6 +68,33 @@ For more Use Cases look at USECASES.md
 3. If the time interval has passed for a specific payment an Accept Payment button will appear.
 3. Accept Payments by pressing Accept
 
+# Technical Description:
+### First Time + Loading Vault
+1. Alon visits his Dashboard
+2. Firebase returns that Alon doesn't have a Vault Contract Saved in DB
+3. Alon has a button: `Initialize Vault`
+4. This fires off `vault..deployed(userAddress, userAddress, 0, 0, userAddress, 0)`
+5. The vaultAddress is saved into the DB so that next time that Alon visits his Dashboard his vault is loaded again.
+6. Now Alon can Load his Vault, Coin Someone etc
+
+### Coining Someone:
+1. Alon visits the Profile Page of Tim
+2. Alon Clicks Coin Tim
+3. Alon inputs 5 ETH per Month
+4. Alons VaultInstance is called using `vaultInstance.authorizePayment`
+```
+vaultInstance.authorizePayment( 'alon', coinSomeoneAddress, Number(coinSomeoneValue), Number(subscriptionDelay), { from: userAddress,gas: 500000 })
+```
+5. This function returns a `paymentId`. This needs to be saved into the DB of *Tim* along with the vaultAddress of *Alon*, payoutTimestamp (Timestamp when Tim can get Payment)
+
+### Receiving Payment:
+1. Tim enters his dashboard
+2. He sees that he has a payment with paymentId `xyz`. 
+3. If the payoutTimestamp has passed. Tim can click on Accept to receive his Ether.
+3. If the payoutTimestamp hasn't passed. Tim can see how long until he can receive his Ether.
+
+Receiving Ether is done with: `alonVaultInstance.collectAuthorizedPayment(xyz, {from: timAddress})`
+
 # Dependencies
 * Truffle
 * React
