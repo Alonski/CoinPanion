@@ -1,4 +1,5 @@
-# CoinPanion
+# CoinPanion - DApp for Status.im
+Submission: https://github.com/status-im/hackathon/issues/20
 CoinPanion is the ultimate blockchain subscription solution. The idea is that any user can go to CoinPanion, then they can choose to subscribe to any other CoinPanion user's Ethereum Address with a payment of X ETH per Y days/weeks/months.
 
 CoinPanion users will have rich profiles which will tell potential coiners about themselves and what they create, work on, or are interested in. Coiners can "coin" friends, family members, or content creators whose work they want to support. With category-based discovery features, search, and a user dashboard CoinPanion is the best and easiest to use blockchain subscription service.
