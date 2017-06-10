@@ -1,5 +1,18 @@
 # CoinPanion - DApp for Status.im
+
 Submission: https://github.com/status-im/hackathon/issues/20
+
+```
+{
+    "whisper-identity": "20-coinpanion",
+    "name": "#20 CoinPanion",
+    "dapp-url": "http://coinpanion.surge.sh/"
+}
+```
+
+
+
+# Description
 
 CoinPanion is the ultimate blockchain subscription solution. The idea is that any user can go to CoinPanion, then they can choose to subscribe to any other CoinPanion user's Ethereum Address with a payment of X ETH per Y days/weeks/months.
 
