@@ -47,7 +47,7 @@ const showChangeTestAccount = false
 // If a user does not have a VaultAddress then it needs to be created by the user
 // Should this be a button to create Vault or just Create Vault when the page loads?
 // Creating a vault like this: Vault.deployed(userAddress, userAddress, 0, 0, userAddress, 0)
-const testVaultAddress = '0x4332c691b7c74ef25481a613c4117207fe546eea'
+const testVaultAddress = '0x55553c198d65fbff3b5cad1b71ada0b291eaf7af'
 
 class Dasboard extends Component {
   constructor(props) {
@@ -76,14 +76,10 @@ class Dasboard extends Component {
     }
   }
 
-  _appLoaded() {
-    console.log('App Loaded?')
-  }
-
   componentDidMount() {
     let web3, provider
     // Get Web3 so we can get our accounts.
-    if (typeof window.web3 !== 'undefined') {
+    if (typeof window.web3 !== 'undefined' && false) {
       // You have a web3 browser! Continue below!
       console.log('We have web3')
       web3 = window.web3
@@ -138,19 +134,21 @@ class Dasboard extends Component {
     let userAddress
     // Get accounts.
     web3.eth.getAccounts(function(error, accounts) {
-      console.log(accounts)
+      // console.log(accounts)
       userAddress = accounts[self.state.testAccount]
       self.setState({
         userAddress: userAddress,
         userBalance: web3.eth.getBalance(userAddress).toString(),
         userBalanceEther: web3.fromWei(web3.eth.getBalance(userAddress), 'ether').toString()
       })
-      console.log(vault.isDeployed())
+      console.log(`Need to use saved vaultInstance Address here instead of testVaultAddress`)
       if (!vault.isDeployed()) {
         vault
           .at(testVaultAddress)
           // .deployed(userAddress, userAddress, 0, 0, userAddress, 0)
           .then(function(instance) {
+            // console.log(vaultInstance)
+            console.log(`Need to save vaultInstance Address ${instance.address} to DB connected with ${userAddress}`)
             vaultInstance = instance
             window.vaultInstancey = vaultInstance
             vaultInstance.authorizeSpender(userAddress, true, { from: userAddress })
@@ -160,13 +158,13 @@ class Dasboard extends Component {
             // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
           })
           .then(function(result) {
-            console.log(`User: ${userAddress} - UserVault: ${result.toString()}`)
+            // console.log(`User: ${userAddress} - UserVault: ${result.toString()}`)
             self.setState({
               vaultBalance: result.toNumber(),
               vaultBalanceEther: web3.fromWei(result, 'ether').toString(),
               vaultAddress: vaultInstance.address
             })
-            console.log(result.toString())
+            // console.log(result.toString())
           })
       } else {
         vault
@@ -269,7 +267,7 @@ class Dasboard extends Component {
       coinSomeoneValue = this.state.coinSomeoneValue,
       coinSomeoneAddress = this.state.coinSomeoneAddress,
       vaultBalance = this.state.vaultBalance,
-      vaultAddress = this.state.vaultAddress,
+      // vaultAddress = this.state.vaultAddress,
       subscriptionDelay = this.state.subscriptionDelay
     let vaultInstance,
       self = this,
