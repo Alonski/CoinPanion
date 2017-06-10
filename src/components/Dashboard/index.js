@@ -91,17 +91,35 @@ class Dasboard extends Component {
     var vaultInstance
 
     // Get accounts.
+    const databaseRefUsers = firebase.database().ref().child('users')
+    const usersRef = querybase.ref(databaseRefUsers, [])
     web3RPC.eth.getAccounts(function(error, accounts) {
       console.log(accounts)
       self.setState({ userAddress: accounts[0], userBalance: web3RPC.eth.getBalance(accounts[0]).toString() })
-      vault.deployed().then(function(instance) {
-        vaultInstance = instance
-        self.setState({
-          vaultBalance: web3RPC.eth.getBalance(vaultInstance.address).toString(),
-          vaultBalanceEther: web3RPC.fromWei(web3RPC.eth.getBalance(vaultInstance.address).toString(), 'ether'),
-          vaultAddress: vaultInstance.address
-        })
-        // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
+      usersRef.where({ eth_address: accounts[0] }).once('value').then(function(userSnap) {
+        if (userSnap && userSnap.val()) {
+          const [myProfile] = Object.values(userSnap.val())
+          const { id, vault_address } = myProfile
+          if (!vault_address) {
+            // initialize vault
+            vault.deployed().then(function(instance) {
+              vaultInstance = instance
+              self.setState({
+                vaultBalance: web3RPC.eth.getBalance(vaultInstance.address).toString(),
+                vaultBalanceEther: web3RPC.fromWei(web3RPC.eth.getBalance(vaultInstance.address).toString(), 'ether'),
+                vaultAddress: vaultInstance.address
+              })
+              firebase.database().ref(`users/${id}`).update({ vault_address: self.state.vaultAddress })
+              // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
+            })
+          } else {
+            self.setState({
+              vaultBalance: web3RPC.eth.getBalance(vault_address).toString(),
+              vaultBalanceEther: web3RPC.fromWei(web3RPC.eth.getBalance(vault_address).toString(), 'ether'),
+              vaultAddress: vault_address
+            })
+          }
+        }
       })
       // .then(function(result) {
       //   console.log(result.toString())

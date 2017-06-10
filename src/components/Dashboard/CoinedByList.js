@@ -1,6 +1,5 @@
 import React from 'react'
 import { List, ListItem } from 'material-ui/List'
-import Subheader from 'material-ui/Subheader'
 import Divider from 'material-ui/Divider'
 import Avatar from 'material-ui/Avatar'
 import IconMenu from 'material-ui/IconMenu'
