@@ -15,10 +15,12 @@ export function web3Initialize() {
   return function(dispatch) {
     let web3Provided
     if (typeof web3 !== 'undefined') {
+      console.log('Using Injected Web3')
       // eslint-disable-next-line
       // eslint-disable-next-line
       web3Provided = new Web3(web3.currentProvider)
     } else {
+      console.log('Using Local Web3')
       // DEVELOPER NOTE: What happens in the wild if the
       // user does not have a browser based wallet? What happens
       // if the Web3 object cannot be initialized with the httpProvider

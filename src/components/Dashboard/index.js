@@ -47,7 +47,7 @@ const showChangeTestAccount = false
 // If a user does not have a VaultAddress then it needs to be created by the user
 // Should this be a button to create Vault or just Create Vault when the page loads?
 // Creating a vault like this: Vault.deployed(userAddress, userAddress, 0, 0, userAddress, 0)
-const testVaultAddress = '0xbd7c88eda10ba981fdce018f98fa714901ec9cad'
+const testVaultAddress = '0x55553c198d65fbff3b5cad1b71ada0b291eaf7af'
 
 class Dasboard extends Component {
   constructor(props) {
@@ -83,7 +83,9 @@ class Dasboard extends Component {
 
   componentWillReceiveProps(nextProps) {
     const { web3 } = nextProps
-    this.initDapp(web3)
+    if (this.props.web3.currentProvider !== web3.currentProvider) {
+      this.initDapp(web3)
+    }
     const myAddress = nextProps.addresses[0]
     if (myAddress) {
       firebase.database().ref().child('users').orderByChild('eth_address').equalTo(myAddress).on('value', snap => {
@@ -222,7 +224,7 @@ class Dasboard extends Component {
       .at(testVaultAddress)
       .then(function(instance) {
         vaultInstance = instance
-        return vaultInstance.receiveEther({ from: userAddress, value: loadVaultValue })
+        return vaultInstance.receiveEther({ from: userAddress, value: loadVaultValue, gasPrice: 5000000000 })
       })
       .then(function(result) {
         _waitForTxToBeMined(web3, result.tx)

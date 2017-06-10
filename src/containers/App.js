@@ -10,6 +10,7 @@ import EditProfile from 'containers/EditProfileWrapper'
 import Dashboard from 'containers/DashboardWrapper'
 import Profile from 'containers/ProfileWrapper'
 import NoMatch from 'components/NoMatch'
+import Web3InitContainer from './Web3InitContainer'
 
 import * as profileActions from '../actions/profile'
 import * as web3Actions from '../actions/web3'
@@ -30,6 +31,7 @@ class App extends Component {
       <Router>
         <div className="App">
           <NavBar />
+          <Web3InitContainer />
           <Switch>
             <Route exact path="/" component={Explore} />
             <Route path="/explore" component={Explore} />
