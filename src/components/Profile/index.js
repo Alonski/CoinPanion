@@ -6,6 +6,7 @@ import { Card, CardActions, CardHeader, CardTitle, CardText } from 'material-ui/
 import Dialog from 'material-ui/Dialog'
 import FlatButton from 'material-ui/FlatButton'
 import TextField from 'material-ui/TextField'
+import Snackbar from 'material-ui/Snackbar'
 import VaultContract from '../../../build/contracts/Vault.json'
 import Web3 from 'web3'
 import Conf from '../../../truffle.js'
@@ -25,7 +26,8 @@ class UserProfile extends Component {
   state = {
     open: false,
     coinAmount: 0.0,
-    imSubscribed: ''
+    imSubscribed: '',
+    snackbarOpen: false
   }
 
   handleOpen = () => {
@@ -72,8 +74,10 @@ class UserProfile extends Component {
       const subscriptionDelay = 60 * 60 * 24 * 30 // fix to every 30 days payment for now
 
       if (this.state.imSubscribed) {
+        // figure out how to update authorizedPayment
         // update coining
-        this.props.firebase.update(`coinings/${this.state.imSubscribed}`, { eth_amount: amount })
+        // this.props.firebase.update(`coinings/${this.state.imSubscribed}`, { eth_amount: amount })
+        console.error('Cannot update coining amount for already subscribed.')
       } else {
         console.log(
           `${myProfile.first_name} ${myProfile.last_name} paid ${userProfile.first_name} ${userProfile.last_name}`,
@@ -115,9 +119,18 @@ class UserProfile extends Component {
           })
           .catch(function(err) {
             console.error(err)
+            this.setState({
+              snackbarOpen: true,
+              snackbarMessage: 'Error Coining user'
+            })
           })
       }
       this.setState({ open: false })
+    } else {
+      this.setState({
+        snackbarOpen: true,
+        snackbarMessage: 'Could not find vault, please visit Dashboard'
+      })
     }
   }
 
@@ -142,6 +155,12 @@ class UserProfile extends Component {
     if (myCoiningKey) {
       this.setState({ imSubscribed: myCoiningKey, coinAmount: this.props.coinings[myCoiningKey].eth_amount })
     }
+  }
+
+  handleRequestClose = () => {
+    this.setState({
+      snackbarOpen: false
+    })
   }
 
   render() {
@@ -198,6 +217,12 @@ class UserProfile extends Component {
             onChange={this.handleCoinAmountChange}
           />
         </Dialog>
+        <Snackbar
+          open={this.state.snackbarOpen}
+          message={this.state.snackbarMessage}
+          autoHideDuration={4000}
+          onRequestClose={this.handleRequestClose}
+        />
       </Card>
     )
   }
