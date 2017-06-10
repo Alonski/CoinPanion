@@ -76,33 +76,15 @@ class Dasboard extends Component {
     }
   }
 
-  componentDidMount() {
-    const { web3 } = this.props
-    this.initDapp(web3)
-  }
+  // componentDidMount() {
+  //   const { web3 } = this.props
+  //   this.initDapp(web3)
+  // }
 
   componentWillReceiveProps(nextProps) {
     const { web3 } = nextProps
     if (this.props.web3.currentProvider !== web3.currentProvider) {
       this.initDapp(web3)
-    }
-    const myAddress = nextProps.addresses[0]
-    if (myAddress) {
-      firebase.database().ref().child('users').orderByChild('eth_address').equalTo(myAddress).on('value', snap => {
-        if (snap.val()) {
-          const myProfile = Object.values(snap.val())[0] // only 1 value should exist for an eth address
-          this.setState({
-            first_name: myProfile.first_name,
-            last_name: myProfile.last_name,
-            email: myProfile.email,
-            category: myProfile.category || this.state.category,
-            content: myProfile.content,
-            biography: myProfile.biography,
-            photo_url: myProfile.photo_url,
-            id: myProfile.id
-          })
-        }
-      })
     }
   }
 
@@ -123,6 +105,26 @@ class Dasboard extends Component {
           console.log('This is an unknown network.')
       }
     })
+
+    console.log(web3.eth.accounts)
+    const myAddress = web3.eth.accounts[0]
+    if (myAddress) {
+      firebase.database().ref().child('users').orderByChild('eth_address').equalTo(myAddress).on('value', snap => {
+        if (snap.val()) {
+          const myProfile = Object.values(snap.val())[0] // only 1 value should exist for an eth address
+          this.setState({
+            first_name: myProfile.first_name,
+            last_name: myProfile.last_name,
+            email: myProfile.email,
+            category: myProfile.category || this.state.category,
+            content: myProfile.content,
+            biography: myProfile.biography,
+            photo_url: myProfile.photo_url,
+            id: myProfile.id
+          })
+        }
+      })
+    }
 
     const contract = require('truffle-contract')
     /*
@@ -149,10 +151,12 @@ class Dasboard extends Component {
     web3.eth.getAccounts(function(error, accounts) {
       // console.log(accounts)
       userAddress = accounts[self.state.testAccount]
-      self.setState({
-        userAddress: userAddress,
-        userBalance: web3.eth.getBalance(userAddress).toString(),
-        userBalanceEther: web3.fromWei(web3.eth.getBalance(userAddress), 'ether').toString()
+      web3.eth.getBalance(userAddress, web3.eth.defaultBlock, (error, result) => {
+        self.setState({
+          userAddress: userAddress,
+          userBalance: result.toString(),
+          userBalanceEther: web3.fromWei(result, 'ether').toString()
+        })
       })
       console.log(`Need to use saved vaultInstance Address here instead of testVaultAddress`)
       if (!vault.isDeployed()) {
@@ -167,17 +171,14 @@ class Dasboard extends Component {
             vaultInstance.authorizeSpender(userAddress, true, { from: userAddress })
           })
           .then(function(result) {
-            return web3.eth.getBalance(vaultInstance.address)
-            // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
-          })
-          .then(function(result) {
-            // console.log(`User: ${userAddress} - UserVault: ${result.toString()}`)
-            self.setState({
-              vaultBalance: result.toNumber(),
-              vaultBalanceEther: web3.fromWei(result, 'ether').toString(),
-              vaultAddress: vaultInstance.address
+            return web3.eth.getBalance(vaultInstance.address, web3.eth.defaultBlock, (error, result) => {
+              self.setState({
+                vaultBalance: result.toNumber(),
+                vaultBalanceEther: web3.fromWei(result, 'ether').toString(),
+                vaultAddress: vaultInstance.address
+              })
             })
-            // console.log(result.toString())
+            // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
           })
       } else {
         vault
@@ -292,6 +293,10 @@ class Dasboard extends Component {
         console.log('Mined TX:', result.tx)
         console.log(('Result', result))
         idPayment = result.logs[0].args.idPayment.toString() // Could save
+        self.setState({
+          openSnackbar: true,
+          snackbarMessage: `ID: ${idPayment} Coined ${coinSomeoneAddress} with ${coinSomeoneValue} WEI`
+        })
         return web3.eth.getBalance(vaultInstance.address)
       })
       .then(function(result) {
@@ -305,10 +310,6 @@ class Dasboard extends Component {
           vaultBalanceEther: web3.fromWei(result, 'ether').toString(),
           userBalance: web3.eth.getBalance(userAddress).toString(),
           userBalanceEther: web3.fromWei(web3.eth.getBalance(userAddress), 'ether').toString()
-        })
-        self.setState({
-          openSnackbar: true,
-          snackbarMessage: `ID: ${idPayment} Coined ${coinSomeoneAddress} with ${coinSomeoneValue} WEI`
         })
       })
   }
