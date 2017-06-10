@@ -61,83 +61,21 @@ class Dasboard extends Component {
     }
   }
 
-  componentDidMount() {
-    /*
-     * SMART CONTRACT EXAMPLE
-     *
-     * Normally these functions would be called in the context of a
-     * state management library, but for convenience I've placed them here.
-     */
-
-    // So we can update state later.
-
-    var self = this
-
-    // Get the RPC provider and setup our SimpleStorage contract.
-    var { host, port } = Conf.networks[process.env.NODE_ENV]
-
-    const provider = new Web3.providers.HttpProvider('http://' + host + ':' + port)
-    const contract = require('truffle-contract')
-    const vault = contract(VaultContract)
-    vault.setProvider(provider)
-
-    // Get Web3 so we can get our accounts.
-    const web3RPC = new Web3(provider)
-
-    self.setState({ web3: web3RPC, vault: vault })
-
-    // Declaring this for later so we can chain functions on SimpleStorage.
-    // var simpleStorageInstance
+  handleInitVault = () => {
+    const { vault, id } = this.state
+    const web3RPC = this.state.web3
+    const self = this
+    // initialize vault
     var vaultInstance
-
-    // Get accounts.
-    const databaseRefUsers = firebase.database().ref().child('users')
-    const usersRef = querybase.ref(databaseRefUsers, [])
-    web3RPC.eth.getAccounts(function(error, accounts) {
-      console.log(accounts)
-      self.setState({ userAddress: accounts[0], userBalance: web3RPC.eth.getBalance(accounts[0]).toString() })
-      usersRef.where({ eth_address: accounts[0] }).once('value').then(function(userSnap) {
-        if (userSnap && userSnap.val()) {
-          const [myProfile] = Object.values(userSnap.val())
-          const { id, vault_address } = myProfile
-          if (!vault_address) {
-            // initialize vault
-            vault.deployed().then(function(instance) {
-              vaultInstance = instance
-              self.setState({
-                vaultBalance: web3RPC.eth.getBalance(vaultInstance.address).toString(),
-                vaultBalanceEther: web3RPC.fromWei(web3RPC.eth.getBalance(vaultInstance.address).toString(), 'ether'),
-                vaultAddress: vaultInstance.address
-              })
-              firebase.database().ref(`users/${id}`).update({ vault_address: self.state.vaultAddress })
-              // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
-            })
-          } else {
-            self.setState({
-              vaultBalance: web3RPC.eth.getBalance(vault_address).toString(),
-              vaultBalanceEther: web3RPC.fromWei(web3RPC.eth.getBalance(vault_address).toString(), 'ether'),
-              vaultAddress: vault_address
-            })
-          }
-        }
+    vault.deployed().then(function(instance) {
+      vaultInstance = instance
+      self.setState({
+        vaultBalance: web3RPC.eth.getBalance(vaultInstance.address).toString(),
+        vaultBalanceEther: web3RPC.fromWei(web3RPC.eth.getBalance(vaultInstance.address).toString(), 'ether'),
+        vaultAddress: vaultInstance.address
       })
-      // .then(function(result) {
-      //   console.log(result.toString())
-      // })
-
-      // vault
-      //   .deployed()
-      //   .then(function(instance) {
-      //     console.log(instance)
-      //     vaultInstance = instance
-      //     return vaultInstance.receiveEther({ from: accounts[0], value: 5000 })
-      //   })
-      //   .then(function(result) {
-      //     _waitForTxToBeMined(web3RPC, result.tx)
-      //     console.log('Mined TX:', result.tx)
-      //     console.log('Contract Balance:', web3RPC.eth.getBalance(vaultInstance.address).toString())
-      //     console.log('Address Balance:', web3RPC.eth.getBalance(accounts[0]).toString())
-      //   })
+      firebase.database().ref(`users/${id}`).update({ vault_address: self.state.vaultAddress })
+      // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
     })
   }
 
@@ -219,7 +157,62 @@ class Dasboard extends Component {
     }
   }
 
-  componentWillMount() {}
+  componentWillMount() {
+    var self = this
+
+    // Get the RPC provider and setup our SimpleStorage contract.
+    var { host, port } = Conf.networks[process.env.NODE_ENV]
+
+    const provider = new Web3.providers.HttpProvider('http://' + host + ':' + port)
+    const contract = require('truffle-contract')
+    const vault = contract(VaultContract)
+    vault.setProvider(provider)
+
+    // Get Web3 so we can get our accounts.
+    const web3RPC = new Web3(provider)
+
+    self.setState({ web3: web3RPC, vault: vault })
+
+    // Get accounts.
+    const databaseRefUsers = firebase.database().ref().child('users')
+    const usersRef = querybase.ref(databaseRefUsers, [])
+    web3RPC.eth.getAccounts(function(error, accounts) {
+      console.log(accounts)
+      self.setState({ userAddress: accounts[0], userBalance: web3RPC.eth.getBalance(accounts[0]).toString() })
+      usersRef.where({ eth_address: accounts[0] }).once('value').then(function(userSnap) {
+        if (userSnap && userSnap.val()) {
+          const [myProfile] = Object.values(userSnap.val())
+          const { vault_address } = myProfile
+          if (vault_address) {
+            self.setState({
+              vaultBalance: web3RPC.eth.getBalance(vault_address).toString(),
+              vaultBalanceEther: web3RPC.fromWei(web3RPC.eth.getBalance(vault_address).toString(), 'ether'),
+              vaultAddress: vault_address
+            })
+          }
+        } else {
+          this.context.router.history.push(`/profile/editprofile`)
+        }
+      })
+      // .then(function(result) {
+      //   console.log(result.toString())
+      // })
+
+      // vault
+      //   .deployed()
+      //   .then(function(instance) {
+      //     console.log(instance)
+      //     vaultInstance = instance
+      //     return vaultInstance.receiveEther({ from: accounts[0], value: 5000 })
+      //   })
+      //   .then(function(result) {
+      //     _waitForTxToBeMined(web3RPC, result.tx)
+      //     console.log('Mined TX:', result.tx)
+      //     console.log('Contract Balance:', web3RPC.eth.getBalance(vaultInstance.address).toString())
+      //     console.log('Address Balance:', web3RPC.eth.getBalance(accounts[0]).toString())
+      //   })
+    })
+  }
 
   handleFieldChange = (stateKey, event, newValue) => {
     const obj = {}
@@ -298,30 +291,34 @@ class Dasboard extends Component {
                 />
                 <ListItem secondaryText="Your balance" primaryText={userBalance} leftIcon={<WalletIcon />} />
               </List>
+              {vaultAddress !== '0x0'
+                ? <List>
+                    <ListItem secondaryText="Vault address" primaryText={vaultAddress} leftIcon={<AccountIcon />} />
+                    <ListItem secondaryText="Vault balance" primaryText={vaultBalanceEther} leftIcon={<WalletIcon />} />
+                  </List>
+                : <RaisedButton label="Initialize Vault" primary={true} onTouchTap={this.handleInitVault} />}
               <Divider inset={true} />
-              <List>
-                <ListItem secondaryText="Vault address" primaryText={vaultAddress} leftIcon={<AccountIcon />} />
-                <ListItem secondaryText="Vault balance" primaryText={vaultBalanceEther} leftIcon={<WalletIcon />} />
-              </List>
             </InnerContainer>
-            <InnerContainer>
-              <i>Load Vault</i>
-              <TextField
-                floatingLabelText="Amount to Load in WEI"
-                type="number"
-                onChange={(event, newValue) => this.handleFieldChange('loadVaultValue', event, newValue)}
-                errorText={!loadVaultValue && !pristine ? 'Value is Required' : null}
-                value={loadVaultValue || ''}
-              />
-              <br />
-              <RaisedButton label="Load Vault" primary={true} onTouchTap={this.handleLoadVault} />
-              <Snackbar
-                open={openSnackbar}
-                message={snackbarMessage}
-                autoHideDuration={4000}
-                onRequestClose={this.handleRequestClose}
-              />
-            </InnerContainer>
+            {vaultAddress !== '0x0'
+              ? <InnerContainer>
+                  <i>Load Vault</i>
+                  <TextField
+                    floatingLabelText="Amount to Load in WEI"
+                    type="number"
+                    onChange={(event, newValue) => this.handleFieldChange('loadVaultValue', event, newValue)}
+                    errorText={!loadVaultValue && !pristine ? 'Value is Required' : null}
+                    value={loadVaultValue || ''}
+                  />
+                  <br />
+                  <RaisedButton label="Load Vault" primary={true} onTouchTap={this.handleLoadVault} />
+                  <Snackbar
+                    open={openSnackbar}
+                    message={snackbarMessage}
+                    autoHideDuration={4000}
+                    onRequestClose={this.handleRequestClose}
+                  />
+                </InnerContainer>
+              : <div />}
           </StyledPaper>
         </Main>
         <br />
