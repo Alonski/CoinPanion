@@ -54,11 +54,11 @@ export default class CoinedList extends React.Component {
                   key={`${coining.id}-1`}
                   leftAvatar={<Avatar src={coining.photo_url} />}
                   rightIconButton={rightIconMenu}
-                  primaryText={`${coining.coiner.first_name} ${coining.last_name}`}
+                  primaryText={`${coining.first_name} ${coining.last_name}`}
                   secondaryText={
                     <p>
                       <span style={{ color: darkBlack }}>{coining.email}</span><br />
-                      Supports you for {coining.eth_amount} WEI per month.
+                      Supports you for {coining.coining.eth_amount} WEI per month.
                     </p>
                   }
                   secondaryTextLines={2}
@@ -68,10 +68,10 @@ export default class CoinedList extends React.Component {
             )}
           />
           <ListItem
-            primaryText={`Coined ${this.props.coinedByMe.length} People`}
+            primaryText={`Coined ${coinedByMe.length} People`}
             initiallyOpen={false}
             primaryTogglesNestedList={true}
-            nestedItems={this.props.coinedByMe.map((coining, index) =>
+            nestedItems={coinedByMe.map((coining, index) =>
               <ListItem key={`div2${index}`} disabled={true} style={{ marginLeft: -18, padding: -16 }}>
                 <ListItem
                   key={`${coining.id}-2`}
@@ -81,7 +81,7 @@ export default class CoinedList extends React.Component {
                   secondaryText={
                     <p>
                       <span style={{ color: darkBlack }}>{coining.email}</span><br />
-                      You are supporting for {coining.eth_amount} WEI per month.
+                      You are supporting for {coining.coining.eth_amount} ETH per month.
                     </p>
                   }
                   secondaryTextLines={2}

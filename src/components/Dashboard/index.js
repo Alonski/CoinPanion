@@ -131,7 +131,6 @@ class Dasboard extends Component {
     const { loadVaultValue, openSnackbar, snackbarMessage, pristine } = this.state
     const { photo_url, first_name = '', coinedBy, coinedByMe } = this.props.user
     const { userAddress, userBalance, contract: { address: vaultAddress }, contractBalance } = this.props
-    console.log(coinedBy, coinedByMe)
     return (
       <div>
         <Main>
