@@ -22,9 +22,18 @@ import './App.css'
 
 class App extends Component {
   componentDidMount() {
-    this.props.getAddresses()
-    this.props.web3Initialize()
+    setTimeout(() => {
+      const web3 = this.props.web3Initialize()
+      this.props.getVault(web3)
+    }, 100)
   }
+
+  // componentWillReceiveProps(nextProps) {
+  //   if (this.props.web3.currentProvider.host !== nextProps.web3.currentProvider.host) {
+  //     const web3 = nextProps.web3Initialize()
+  //     nextProps.getVault(web3)
+  //   }
+  // }
 
   render() {
     return (
@@ -48,7 +57,9 @@ class App extends Component {
 }
 
 function mapStateToProps(state) {
-  return state
+  return {
+    web3: state.web3.web3Provider
+  }
 }
 
 function mapDispatchToProps(dispatch) {

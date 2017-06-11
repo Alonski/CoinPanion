@@ -142,60 +142,8 @@ class EditProfile extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    const { web3 } = nextProps
-    if (this.props.web3.currentProvider !== web3.currentProvider) {
-      this.initDapp(web3)
-    }
-  }
-
-  initDapp = web3 => {
-    const provider = web3.currentProvider
-    web3.version.getNetwork((err, netId) => {
-      switch (netId) {
-        case '1':
-          console.log('This is mainnet')
-          break
-        case '2':
-          console.log('This is the deprecated Morden test network.')
-          break
-        case '3':
-          console.log('This is the ropsten test network.')
-          break
-        default:
-          console.log('This is an unknown network.')
-      }
-    })
-
-    console.log(web3.eth.accounts)
-    const myAddress = web3.eth.accounts[0]
-    if (myAddress) {
-      this.setState({
-        eth_address: myAddress
-      })
-      this.props.firebase
-        .database()
-        .ref()
-        .child('users')
-        .orderByChild('eth_address')
-        .equalTo(myAddress)
-        .once('value', snap => {
-          if (snap.val()) {
-            console.log(snap)
-            console.log(snap.val())
-            const myProfile = Object.values(snap.val())[0] // only 1 value should exist for an eth address
-            this.setState({
-              first_name: myProfile.first_name,
-              last_name: myProfile.last_name,
-              email: myProfile.email,
-              category: myProfile.category || this.state.category,
-              content: myProfile.content,
-              biography: myProfile.biography,
-              photo_url: this.state.photo_url || myProfile.photo_url,
-              id: myProfile.id
-            })
-          }
-        })
-    }
+    const { user, userAddress } = nextProps
+    this.setState({ ...user, eth_address: userAddress })
   }
 
   render() {
