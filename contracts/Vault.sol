@@ -120,6 +120,9 @@ contract Vault is Escapable {
     /// @notice Called anytime ether is sent to the contract && creates an event
     /// to more easily track the incoming transactions
     function receiveEther() payable {
+        if (msg.value <= 0) {
+            throw;
+        }
         EtherReceived(msg.sender, msg.value);
     }
 
@@ -132,10 +135,8 @@ contract Vault is Escapable {
 ////////
 // Spender Interface
 ////////
-
     /// @notice only `allowedSpenders[]` Creates a new `Payment`
     /// @param _name Brief description of the payment that is authorized
-    /// @param _reference External reference of the payment
     /// @param _recipient Destination of the payment
     /// @param _amount Amount to be paid in wei
     /// @param _paymentDelay Number of seconds the payment is to be delayed, if
@@ -143,7 +144,6 @@ contract Vault is Escapable {
     /// @return The Payment ID number for the new authorized payment
     function authorizePayment(
         string _name,
-        bytes32 _reference,
         address _recipient,
         uint _amount,
         uint _paymentDelay
@@ -168,7 +168,6 @@ contract Vault is Escapable {
         p.recipient = _recipient;
         p.amount = _amount;
         p.name = _name;
-        p.reference = _reference;
         PaymentAuthorized(idPayment, p.recipient, p.amount);
         return idPayment;
     }
@@ -190,12 +189,12 @@ contract Vault is Escapable {
         if (now < p.earliestPayTime) throw;
         if (p.canceled) throw;
         if (p.paid) throw;
-        if (this.balance < p.amount) throw;
+        if (this.balance < p.amount || p.amount == 0) throw;
 
         p.paid = true; // Set the payment to being paid
-        if (!p.recipient.send(p.amount)) {  // Make the payment
-            throw;
-        }
+
+        p.recipient.transfer(p.amount);
+
         PaymentExecuted(_idPayment, p.recipient, p.amount);
      }
 
