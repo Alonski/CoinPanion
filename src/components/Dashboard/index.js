@@ -77,7 +77,7 @@ class Dasboard extends Component {
     // initialize vault
     var vaultInstance
     vault
-      .deployed(userAddress, userAddress, 0, 0, userAddress, 0)
+      .new(userAddress, userAddress, 0, 0, userAddress, 0, { from: userAddress })
       .then(function(instance) {
         vaultInstance = instance
         firebase.database().ref(`users/${id}`).update({ vault_address: vaultInstance.address })
@@ -287,7 +287,8 @@ class Dasboard extends Component {
       web3 = this.state.web3,
       userAddress = this.state.userAddress,
       userBalance = this.state.userBalance,
-      loadVaultValue = this.state.loadVaultValue
+      loadVaultValue = this.state.loadVaultValue,
+      vaultAddress = this.state.vaultAddress
     let vaultInstance,
       self = this
     if (Number(loadVaultValue) > Number(userBalance)) {
@@ -296,7 +297,7 @@ class Dasboard extends Component {
       return
     }
     vault
-      .deployed()
+      .at(vaultAddress)
       .then(function(instance) {
         vaultInstance = instance
         return vaultInstance.receiveEther({ from: userAddress, value: loadVaultValue })
@@ -304,13 +305,24 @@ class Dasboard extends Component {
       .then(function(result) {
         _waitForTxToBeMined(web3, result.tx)
         console.log('Mined TX:', result.tx)
-        console.log('Contract Balance:', web3.eth.getBalance(vaultInstance.address).toString())
-        console.log('Address Balance:', web3.eth.getBalance(userAddress).toString())
-        self.setState({
-          vaultBalance: web3.eth.getBalance(vaultInstance.address).toString(),
-          vaultBalanceEther: web3.fromWei(web3.eth.getBalance(vaultInstance.address).toString(), 'ether'),
-          userBalance: web3.eth.getBalance(userAddress).toString()
+
+        web3.eth.getBalance(vaultInstance.address, web3.eth.defaultBlock, (error, result) => {
+          console.log('Contract Balance:', result.toNumber())
+
+          self.setState({
+            vaultBalance: result.toNumber(),
+            vaultBalanceEther: web3.fromWei(result, 'ether').toString()
+          })
         })
+
+        web3.eth.getBalance(userAddress, web3.eth.defaultBlock, (error, result) => {
+          console.log('Address Balance:', result.toString())
+
+          self.setState({
+            userBalance: result.toString().toString()
+          })
+        })
+
         self.setState({ openSnackbar: true, snackbarMessage: `Vault loaded with ${loadVaultValue} WEI` })
       })
   }
