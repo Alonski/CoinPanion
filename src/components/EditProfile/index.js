@@ -157,7 +157,8 @@ class EditProfile extends Component {
       biography,
       openSnackbar,
       snackbarMessage,
-      pristine
+      pristine,
+      eth_address
     } = this.state
 
     return (
@@ -166,7 +167,7 @@ class EditProfile extends Component {
           <FormContainer>
             <Avatar src={photo_url} size={150} />
             <Uploader onDrop={this.onFilesDrop} />
-            <TextField disabled={true} value={this.state.eth_address} floatingLabelText="ETH address" />
+            <TextField disabled={true} value={eth_address} floatingLabelText="ETH address" />
             <TextField
               floatingLabelText="First Name"
               onChange={(event, newValue) => this.handleFieldChange('first_name', event, newValue)}

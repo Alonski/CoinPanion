@@ -22,7 +22,7 @@ const rightIconMenu = (
   </IconMenu>
 )
 
-export default class ListExampleNested extends React.Component {
+export default class CoinedList extends React.Component {
   state = {
     open: false
   }
