@@ -57,7 +57,7 @@ class EditProfile extends Component {
   }
 
   handleSave = event => {
-    const myAddress = this.props.addresses[0]
+    const myAddress = this.state.eth_address
     const userProfile = {
       first_name: this.state.first_name,
       last_name: this.state.last_name,
@@ -141,9 +141,37 @@ class EditProfile extends Component {
     this.setState({ openSnackbar: false })
   }
 
-  componentWillReceiveProps() {
-    const myAddress = this.props.addresses[0]
+  componentWillReceiveProps(nextProps) {
+    const { web3 } = nextProps
+    if (this.props.web3.currentProvider !== web3.currentProvider) {
+      this.initDapp(web3)
+    }
+  }
+
+  initDapp = web3 => {
+    const provider = web3.currentProvider
+    web3.version.getNetwork((err, netId) => {
+      switch (netId) {
+        case '1':
+          console.log('This is mainnet')
+          break
+        case '2':
+          console.log('This is the deprecated Morden test network.')
+          break
+        case '3':
+          console.log('This is the ropsten test network.')
+          break
+        default:
+          console.log('This is an unknown network.')
+      }
+    })
+
+    console.log(web3.eth.accounts)
+    const myAddress = web3.eth.accounts[0]
     if (myAddress) {
+      this.setState({
+        eth_address: myAddress
+      })
       this.props.firebase
         .database()
         .ref()
@@ -181,7 +209,8 @@ class EditProfile extends Component {
       biography,
       openSnackbar,
       snackbarMessage,
-      pristine
+      pristine,
+      eth_address
     } = this.state
 
     return (
@@ -190,7 +219,7 @@ class EditProfile extends Component {
           <FormContainer>
             <Avatar src={photo_url} size={150} />
             <Uploader onDrop={this.onFilesDrop} />
-            <TextField disabled={true} value={this.props.addresses[0]} floatingLabelText="ETH address" />
+            <TextField disabled={true} value={eth_address} floatingLabelText="ETH address" />
             <TextField
               floatingLabelText="First Name"
               onChange={(event, newValue) => this.handleFieldChange('first_name', event, newValue)}
