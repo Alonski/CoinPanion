@@ -39,6 +39,8 @@ const StyledPaper = styled(Paper)`
   padding-bottom: 10px;
 `
 
+const period = ['Days', 'Weeks', 'Months']
+
 class Dasboard extends Component {
   constructor(props) {
     super(props)
@@ -58,33 +60,70 @@ class Dasboard extends Component {
       first_name: '',
       last_name: '',
       coinedBy: [],
-      coinedByMe: []
+      coinedByMe: [],
+      selectedPeriod: 'Days',
+      coinSomeoneAddress: '0x0',
+      subscriptionDelay: 0,
+      coinSomeoneValue: 0,
+      testAccount: 0
     }
   }
 
   handleInitVault = () => {
     const { vault, id } = this.state
-    const web3RPC = this.state.web3
+    const web3 = this.state.web3
+    const userAddress = this.state.userAddress
     const self = this
     // initialize vault
     var vaultInstance
-    vault.deployed().then(function(instance) {
-      vaultInstance = instance
-      self.setState({
-        vaultBalance: web3RPC.eth.getBalance(vaultInstance.address).toString(),
-        vaultBalanceEther: web3RPC.fromWei(web3RPC.eth.getBalance(vaultInstance.address).toString(), 'ether'),
-        vaultAddress: vaultInstance.address
+    vault
+      .deployed(userAddress, userAddress, 0, 0, userAddress, 0)
+      .then(function(instance) {
+        vaultInstance = instance
+        firebase.database().ref(`users/${id}`).update({ vault_address: vaultInstance.address })
+        vaultInstance.authorizeSpender(userAddress, true, { from: userAddress })
       })
-      firebase.database().ref(`users/${id}`).update({ vault_address: self.state.vaultAddress })
-      // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
-    })
+      .then(function(result) {
+        return web3.eth.getBalance(vaultInstance.address, web3.eth.defaultBlock, (error, result) => {
+          self.setState({
+            vaultBalance: result.toNumber(),
+            vaultBalanceEther: web3.fromWei(result, 'ether').toString(),
+            vaultAddress: vaultInstance.address
+          })
+        })
+        // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
+      })
   }
 
   componentWillReceiveProps(nextProps) {
-    const myAddress = nextProps.addresses[0]
+    const { web3 } = nextProps
+    if (this.props.web3.currentProvider !== web3.currentProvider) {
+      this.initDapp(web3)
+    }
+  }
+
+  initDapp = web3 => {
+    const provider = web3.currentProvider
+    web3.version.getNetwork((err, netId) => {
+      switch (netId) {
+        case '1':
+          console.log('This is mainnet')
+          break
+        case '2':
+          console.log('This is the deprecated Morden test network.')
+          break
+        case '3':
+          console.log('This is the ropsten test network.')
+          break
+        default:
+          console.log('This is an unknown network.')
+      }
+    })
+    console.log(web3.eth.accounts)
+    const myAddress = web3.eth.accounts[0]
+    const databaseRefUsers = firebase.database().ref().child('users')
+    const usersRef = querybase.ref(databaseRefUsers, [])
     if (myAddress) {
-      const databaseRefUsers = firebase.database().ref().child('users')
-      const usersRef = querybase.ref(databaseRefUsers, [])
       const databaseRefCoinings = firebase.database().ref().child('coinings')
       const coiningsRef = querybase.ref(databaseRefCoinings, [])
       const coineeIsMe = {}
@@ -156,64 +195,85 @@ class Dasboard extends Component {
           }
         })
     }
-  }
 
-  componentWillMount() {
+    const contract = require('truffle-contract')
+    /*
+     * SMART CONTRACT EXAMPLE
+     *
+     * Normally these functions would be called in the context of a
+     * state management library, but for convenience I've placed them here.
+     */
+
+    // So we can update state later.
     var self = this
 
-    // Get the RPC provider and setup our SimpleStorage contract.
-    var { host, port } = Conf.networks[process.env.NODE_ENV]
-
-    const provider = new Web3.providers.HttpProvider('http://' + host + ':' + port)
-    const contract = require('truffle-contract')
     const vault = contract(VaultContract)
     vault.setProvider(provider)
 
-    // Get Web3 so we can get our accounts.
-    const web3RPC = new Web3(provider)
+    window.vaulty = vault
 
-    self.setState({ web3: web3RPC, vault: vault })
+    self.setState({ web3: web3, vault: vault })
 
+    // Declaring this for later so we can chain functions on vaultInstance.
+    var vaultInstance
+    let userAddress
     // Get accounts.
-    const databaseRefUsers = firebase.database().ref().child('users')
-    const usersRef = querybase.ref(databaseRefUsers, [])
-    web3RPC.eth.getAccounts(function(error, accounts) {
-      console.log(accounts)
-      self.setState({ userAddress: accounts[0], userBalance: web3RPC.eth.getBalance(accounts[0]).toString() })
+    web3.eth.getAccounts(function(error, accounts) {
+      // console.log(accounts)
+      userAddress = accounts[self.state.testAccount]
+      web3.eth.getBalance(userAddress, web3.eth.defaultBlock, (error, result) => {
+        self.setState({
+          userAddress: userAddress,
+          userBalance: result.toString(),
+          userBalanceEther: web3.fromWei(result, 'ether').toString()
+        })
+      })
       usersRef.where({ eth_address: accounts[0] }).once('value').then(function(userSnap) {
         if (userSnap && userSnap.val()) {
           const [myProfile] = Object.values(userSnap.val())
           const { vault_address } = myProfile
           if (vault_address) {
-            self.setState({
-              vaultBalance: web3RPC.eth.getBalance(vault_address).toString(),
-              vaultBalanceEther: web3RPC.fromWei(web3RPC.eth.getBalance(vault_address).toString(), 'ether'),
-              vaultAddress: vault_address
+            web3.eth.getBalance(vault_address, web3.eth.defaultBlock, (error, result) => {
+              self.setState({
+                vaultBalance: result.toNumber(),
+                vaultBalanceEther: web3.fromWei(result, 'ether').toString(),
+                vaultAddress: vault_address
+              })
             })
+
+            vault
+              .at(vault_address)
+              // .new(userAddress, userAddress, 0, 0, userAddress, 0)
+              .then(function(instance) {
+                console.log(vaultInstance)
+                console.log(
+                  `Need to save vaultInstance Address ${instance.address} to DB connected with ${userAddress}`
+                )
+                vaultInstance = instance
+                window.vaultInstancey = vaultInstance
+                vaultInstance.authorizeSpender(userAddress, true, { from: userAddress })
+                console.log('After AuthorizeSpender')
+              })
+              .then(function(result) {
+                console.log('After AuthorizeSpenderResult')
+                return web3.eth.getBalance(vaultInstance.address, web3.eth.defaultBlock, (error, result) => {
+                  self.setState({
+                    vaultBalance: result.toNumber(),
+                    vaultBalanceEther: web3.fromWei(result, 'ether').toString(),
+                    vaultAddress: vaultInstance.address
+                  })
+                })
+                // return vaultInstance.numberOfAuthorizedPayments.call(accounts[0])
+              })
           }
         } else {
           self.context.router.history.push('/editprofile')
         }
       })
-      // .then(function(result) {
-      //   console.log(result.toString())
-      // })
-
-      // vault
-      //   .deployed()
-      //   .then(function(instance) {
-      //     console.log(instance)
-      //     vaultInstance = instance
-      //     return vaultInstance.receiveEther({ from: accounts[0], value: 5000 })
-      //   })
-      //   .then(function(result) {
-      //     _waitForTxToBeMined(web3RPC, result.tx)
-      //     console.log('Mined TX:', result.tx)
-      //     console.log('Contract Balance:', web3RPC.eth.getBalance(vaultInstance.address).toString())
-      //     console.log('Address Balance:', web3RPC.eth.getBalance(accounts[0]).toString())
-      //   })
     })
   }
+
+  componentWillMount() {}
 
   handleFieldChange = (stateKey, event, newValue) => {
     const obj = {}
@@ -230,7 +290,7 @@ class Dasboard extends Component {
       loadVaultValue = this.state.loadVaultValue
     let vaultInstance,
       self = this
-    if (loadVaultValue > userBalance) {
+    if (Number(loadVaultValue) > Number(userBalance)) {
       console.log('Not enough Ether!')
       self.setState({ openSnackbar: true, snackbarMessage: 'Error: Not enough Ether!', loadVaultValue: 0 })
       return
@@ -345,7 +405,9 @@ async function _waitForTxToBeMined(web3, txHash) {
   let txReceipt
   while (!txReceipt) {
     try {
-      txReceipt = await web3.eth.getTransactionReceipt(txHash)
+      txReceipt = await web3.eth.getTransactionReceipt(txHash, web3.eth.defaultBlock, result => {
+        console.log(result)
+      })
     } catch (err) {
       return console.log(err)
     }
