@@ -60,78 +60,16 @@ class UserProfile extends Component {
       )
       return false
     }
+    this.props.coinSomeone({
+      coinSomeoneValue: Number(amount),
+      coinSomeoneAddress: this.props.userProfile.eth_address,
+      subscriptionDelay: 10
+    })
 
-    if (this.props.myProfile.vault_address) {
-      const { myProfile, userProfile } = this.props
-
-      var { host, port } = Conf.networks[process.env.NODE_ENV]
-      const provider = new Web3.providers.HttpProvider('http://' + host + ':' + port)
-      const vaultAddress = myProfile.vault_address
-      const contract = require('truffle-contract')
-      const vault = contract(VaultContract)
-      vault.setProvider(provider)
-      const vaultInstance = vault.at(vaultAddress)
-      const subscriptionDelay = 60 * 60 * 24 * 30 // fix to every 30 days payment for now
-
-      if (this.state.imSubscribed) {
-        // figure out how to update authorizedPayment
-        // update coining
-        // this.props.firebase.update(`coinings/${this.state.imSubscribed}`, { eth_amount: amount })
-        console.error('Cannot update coining amount for already subscribed.')
-      } else {
-        console.log(
-          `${myProfile.first_name} ${myProfile.last_name} paid ${userProfile.first_name} ${userProfile.last_name}`,
-          null,
-          userProfile.eth_address,
-          Number(amount),
-          Number(subscriptionDelay),
-          { from: myProfile.eth_address, gas: 500000 }
-        )
-        const paymentId = vaultInstance
-          .authorizePayment(
-            `${myProfile.first_name} ${myProfile.last_name} paid ${userProfile.first_name} ${userProfile.last_name}`,
-            null,
-            userProfile.eth_address,
-            Number(amount),
-            Number(subscriptionDelay),
-            { from: myProfile.eth_address, gas: 500000 }
-          )
-          .then(result => {
-            // add new coining
-            this.props.firebase.push('coinings', {
-              payment_id: paymentId,
-              coiner_vault_address: vaultAddress,
-              coiner: myProfile.id,
-              coinee: userProfile.id,
-              eth_amount: amount,
-              payout_timestamp_ms: Date.now() + subscriptionDelay * 1000 // convert seconds to ms
-            })
-
-            // find event in logs
-            for (var i = 0; i < result.logs.length; i++) {
-              var log = result.logs[i]
-              if (log.event === 'PaymentAuthorized') {
-                // We found the event!
-                console.log(log)
-                break
-              }
-            }
-          })
-          .catch(function(err) {
-            console.error(err)
-            this.setState({
-              snackbarOpen: true,
-              snackbarMessage: 'Error Coining user'
-            })
-          })
-      }
-      this.setState({ open: false })
-    } else {
-      this.setState({
-        snackbarOpen: true,
-        snackbarMessage: 'Could not find vault, please visit Dashboard'
-      })
-    }
+    this.setState({
+      snackbarOpen: true,
+      snackbarMessage: `Coined for ${amount}`
+    })
   }
 
   handleUnsubscribe = () => {
@@ -165,6 +103,7 @@ class UserProfile extends Component {
 
   render() {
     const { userProfile } = this.props
+    console.log(this.props)
     const actions = [
       <FlatButton label="Cancel" onTouchTap={this.handleClose} />,
       <FlatButton
@@ -238,25 +177,9 @@ class Profile extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    const { addresses } = nextProps
+    const { myProfile } = nextProps
     this.getUser(nextProps.match.params.id)
-    if (addresses && addresses[0]) {
-      this.setState({ myAddress: addresses[0] })
-      this.props.firebase
-        .database()
-        .ref()
-        .child('users')
-        .orderByChild('eth_address')
-        .equalTo(addresses[0])
-        .once('value', snap => {
-          if (snap.val()) {
-            const myProfile = Object.values(snap.val())[0] // only 1 value should exist for an eth address
-            this.setState({
-              myProfile: myProfile
-            })
-          }
-        })
-    }
+    this.setState({ myProfile })
   }
 
   componentWillMount() {
@@ -297,6 +220,7 @@ class Profile extends Component {
         {this.state.userExists
           ? <Container>
               <UserProfile
+                {...this.props}
                 userProfile={this.state.userProfile}
                 coinings={this.state.coinings}
                 firebase={this.props.firebase}
@@ -310,4 +234,4 @@ class Profile extends Component {
 }
 
 const fbWrappedComponent = firebase()(Profile)
-export default connect()(fbWrappedComponent)
+export default fbWrappedComponent

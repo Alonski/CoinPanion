@@ -125,6 +125,43 @@ export function initVault(userAddress, id) {
   }
 }
 
+export function coinSomeone({ coinSomeoneValue, coinSomeoneAddress, subscriptionDelay }) {
+  return async (dispatch, getState) => {
+    const { contract: vault, web3Provider: web3, userAddress } = getState().web3
+    // CHANGE NAME
+    const result = await vault.authorizePayment(
+      'alon',
+      coinSomeoneAddress,
+      Number(coinSomeoneValue),
+      Number(subscriptionDelay),
+      {
+        from: userAddress,
+        gas: 500000
+      }
+    )
+    _waitForTxToBeMined(web3, result.tx)
+    console.log('Mined TX:', result.tx)
+    console.log(('Result', result))
+    const payment_id = result.logs[0].args.idPayment.toString()
+    const object = {
+      payment_id,
+      coiner_vault_address: vault.address,
+      coiner: userAddress,
+      coinee: coinSomeoneAddress,
+      eth_amount: web3.fromWei(coinSomeoneValue, 'ether').toString(),
+      payout_timestamp_ms: Date.now() + subscriptionDelay * 1000 // convert seconds to ms
+    }
+    console.log(object)
+    firebase.database().ref().child('coinings').push().set(object)
+    const getBalancePromise = promisify(web3.eth.getBalance)
+    const contractResponse = await getBalancePromise(vault.address, web3.eth.defaultBlock)
+    const contractBalance = contractResponse.toNumber()
+    console.log(`User: ${userAddress} - UserVault: ${result.toString()}`)
+    console.log('Vault Balance:', contractBalance)
+    dispatch({ type: actionTypes.COIN_SOMEONE, payload: { contractBalance } })
+  }
+}
+
 async function _waitForTxToBeMined(web3, txHash) {
   let txReceipt
   while (!txReceipt) {

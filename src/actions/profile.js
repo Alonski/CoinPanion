@@ -4,51 +4,29 @@ import * as querybase from 'querybase'
 
 export function getUser(user) {
   return async dispatch => {
-    // const databaseRefCoinings = firebase.database().ref().child('coinings')
-    // const coiningsRef = querybase.ref(databaseRefCoinings, [])
-    // const coineeIsMeSnap = await coiningsRef.where({ coinee: myProfile.id }).once('value')
-    // const coinerIsMeSnap = await coiningsRef.where({ coiner: myProfile.id }).once('value')
-    // if (coineeIsMeSnap && coineeIsMeSnap.val()) {
-    //   const usersPromises = Object.values(coineeIsMeSnap.val()).map(coining => {
-    //     // key by coiner to allow join
-    //     coineeIsMe[coining.coiner] = coining
-    //     return usersRef.where({ id: coining.coiner }).once('value')
-    //   })
-    //   Promise.all(usersPromises).then(usersSnaps => {
-    //     if (usersSnaps) {
-    //       usersSnaps.forEach(snap => {
-    //         const [user] = Object.values(snap.val())
-    //         if (coineeIsMe[user.id]) {
-    //           coineeIsMe[user.id].coiner = user
-    //         }
-    //       })
-    //       this.setState({
-    //         coinedBy: Object.values(coineeIsMe)
-    //       })
-    //     }
-    //   })
-    // }
-
-    // if (coinerIsMeSnap && coinerIsMeSnap.val()) {
-    //   const usersPromises = Object.values(coinerIsMeSnap.val()).map(coining => {
-    //     // key by coinee to allow join
-    //     coinerIsMe[coining.coinee] = coining
-    //     return usersRef.where({ id: coining.coinee }).once('value')
-    //   })
-    //   Promise.all(usersPromises).then(usersSnaps => {
-    //     if (usersSnaps) {
-    //       usersSnaps.forEach(snap => {
-    //         const [user] = Object.values(snap.val())
-    //         if (coinerIsMe[user.id]) {
-    //           coinerIsMe[user.id].coinee = user
-    //         }
-    //       })
-    //       this.setState({
-    //         coinedByMe: Object.values(coinerIsMe)
-    //       })
-    //     }
-    //   })
-    // }
+    const databaseRefCoinings = firebase.database().ref().child('coinings')
+    const coiningsRef = querybase.ref(databaseRefCoinings, [])
+    const databaseRefUsers = firebase.database().ref().child('users')
+    const usersRef = querybase.ref(databaseRefUsers, [])
+    const coineeIsMeSnap = await coiningsRef.where({ coinee: user.eth_address }).once('value')
+    const coinerIsMeSnap = await coiningsRef.where({ coiner: user.eth_address }).once('value')
+    const coineeIsMePromise = Object.values(coineeIsMeSnap.val() || {}).map(coining => {
+      return usersRef.where({ eth_address: coining.coiner.toLowerCase() }).once('value')
+    })
+    const responseCoineeIsMe = await Promise.all(coineeIsMePromise)
+    user.coinedBy = responseCoineeIsMe.map(res => {
+      const [user] = Object.values(res.val())
+      return user
+    })
+    const coinerIsMePromise = Object.values(coinerIsMeSnap.val() || {}).map(coining => {
+      console.log(coining.coinee, usersRef.where({ eth_address: coining.coinee.toLowerCase() }).once('value'))
+      return usersRef.where({ eth_address: coining.coinee.toLowerCase() }).once('value')
+    })
+    const responseCoinerIsMe = await Promise.all(coinerIsMePromise)
+    user.coinedByMe = responseCoinerIsMe.map(res => {
+      const [user] = Object.values(res.val())
+      return user
+    })
     dispatch({ type: actionTypes.GET_USER, payload: user })
   }
 }

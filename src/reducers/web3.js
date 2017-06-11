@@ -23,6 +23,8 @@ export default function web3Reducer(state = defaultState, action) {
       return { ...state, ...action.payload }
     case actionTypes.INIT_VAULT:
       return { ...state, ...action.payload }
+    case actionTypes.COIN_SOMEONE:
+      return { ...state, ...action.payload }
     default:
       return state
   }

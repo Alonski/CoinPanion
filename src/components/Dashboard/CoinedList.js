@@ -40,23 +40,24 @@ export default class CoinedList extends React.Component {
   }
 
   render() {
+    const { coinedBy, coinedByMe } = this.props
     return (
       <div>
         <List style={{ minWidth: 250 }}>
           <ListItem
-            primaryText={`Coined by ${this.props.coinedBy.length} People`}
+            primaryText={`Coined by ${coinedBy.length} People`}
             initiallyOpen={false}
             primaryTogglesNestedList={true}
-            nestedItems={this.props.coinedBy.map((coining, index) =>
+            nestedItems={coinedBy.map((coining, index) =>
               <ListItem key={`div1${index}`} disabled={true} style={{ marginLeft: -18, padding: -16 }}>
                 <ListItem
-                  key={`${coining.coiner.id}-1`}
-                  leftAvatar={<Avatar src={coining.coiner.photo_url} />}
+                  key={`${coining.id}-1`}
+                  leftAvatar={<Avatar src={coining.photo_url} />}
                   rightIconButton={rightIconMenu}
-                  primaryText={`${coining.coiner.first_name} ${coining.coiner.last_name}`}
+                  primaryText={`${coining.coiner.first_name} ${coining.last_name}`}
                   secondaryText={
                     <p>
-                      <span style={{ color: darkBlack }}>{coining.coiner.email}</span><br />
+                      <span style={{ color: darkBlack }}>{coining.email}</span><br />
                       Supports you for {coining.eth_amount} WEI per month.
                     </p>
                   }
@@ -73,13 +74,13 @@ export default class CoinedList extends React.Component {
             nestedItems={this.props.coinedByMe.map((coining, index) =>
               <ListItem key={`div2${index}`} disabled={true} style={{ marginLeft: -18, padding: -16 }}>
                 <ListItem
-                  key={`${coining.coinee.id}-2`}
-                  leftAvatar={<Avatar src={coining.coinee.photo_url} />}
+                  key={`${coining.id}-2`}
+                  leftAvatar={<Avatar src={coining.photo_url} />}
                   rightIconButton={rightIconMenu}
-                  primaryText={`${coining.coinee.first_name} ${coining.coinee.last_name}`}
+                  primaryText={`${coining.first_name} ${coining.last_name}`}
                   secondaryText={
                     <p>
-                      <span style={{ color: darkBlack }}>{coining.coinee.email}</span><br />
+                      <span style={{ color: darkBlack }}>{coining.email}</span><br />
                       You are supporting for {coining.eth_amount} WEI per month.
                     </p>
                   }
